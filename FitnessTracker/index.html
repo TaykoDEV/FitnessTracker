@@ -66,7 +66,7 @@ input,select{font:inherit;color:inherit}
 h1{margin:2px 0 0;font:700 40px/1 var(--disp);text-transform:uppercase;text-wrap:balance}
 h2{margin:0;font:700 26px/1.05 var(--disp);text-transform:uppercase;text-wrap:balance}
 h3{margin:0;font:700 22px/1.1 var(--disp);text-transform:uppercase}
-.shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:26px 0 10px}
+.shd{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:26px 0 10px}
 .shd h2{font-size:22px}
 .mute{color:var(--mute)}
 .small{font-size:14px}
@@ -212,6 +212,15 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
 .sw button[aria-pressed="true"]{border-color:var(--fg)}
 .sw input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 .swc{background:conic-gradient(#e5484d,#f5c518,#3fb950,#2dbfb0,#4c8df6,#ec5fa8,#e5484d)}
+.gnav{display:flex;align-items:center;gap:2px}
+.ibtn.sm{width:40px;height:40px}
+.pill{min-height:36px;padding:0 12px;border-radius:999px;background:var(--surf2);font-weight:600;font-size:14px;color:var(--acc)}
+.cal-t{font:700 22px var(--disp);text-transform:uppercase;min-height:44px;padding:0 10px}
+@media (prefers-reduced-motion:no-preference){
+ .sl-next{animation:slnext .2s ease-out}.sl-prev{animation:slprev .2s ease-out}
+ @keyframes slnext{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
+ @keyframes slprev{from{opacity:0;transform:translateX(-36px)}to{opacity:1;transform:none}}
+}
 #toasts{position:fixed;left:16px;right:16px;bottom:84px;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:20}
 .toast{background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:15px;max-width:520px;text-align:center}
 @media (prefers-reduced-motion:no-preference){.toast{animation:tin .18s ease-out}@keyframes tin{from{opacity:0;transform:translateY(6px)}}}
@@ -366,8 +375,7 @@ function dotHTML(c,ring){return '<i class="dot'+(ring?' ring':'')+'"'+(c?' style
 function dayDots(ds,tds){
  var dn=sessOn(ds);
  if(dn.length)return dn.slice(0,2).map(function(x){return dotHTML(tcol(x.tplId))}).join('');
- var pid=planFor(ds),t=pid&&S.tpls.find(function(x){return x.id===pid});
- return t&&ds>=tds?dotHTML(t.color,true):dotHTML(null);
+ return dotHTML(null);
 }
 function curTpl(){return S.tpls.find(function(t){return t.id===ui.route.id})}
 
@@ -445,7 +453,7 @@ function planLine(it){return '<div class="xl"><span class="t">'+esc(exName(it.ex
 function calHTML(){
  var now=new Date();if(!ui.cal)ui.cal={y:now.getFullYear(),m:now.getMonth()};
  var y=ui.cal.y,m=ui.cal.m,lead=dow(new Date(y,m,1)),n=new Date(y,m+1,0).getDate(),tds=todayISO();
- var h='<div class="cal"><div class="cal-h"><button class="ibtn" data-act="calPrev" aria-label="Mois précédent">'+svg('back',22)+'</button><b>'+MONTHS[m]+' '+y+'</b><button class="ibtn" data-act="calNext" aria-label="Mois suivant">'+svg('chev',22)+'</button></div><div class="cal-g">';
+ var h='<div class="cal" data-swipe="cal"><div class="cal-h"><button class="ibtn" data-act="calPrev" aria-label="Mois précédent">'+svg('back',22)+'</button><button class="cal-t" data-act="calNow" aria-label="Revenir au mois en cours">'+MONTHS[m]+' '+y+'</button><button class="ibtn" data-act="calNext" aria-label="Mois suivant">'+svg('chev',22)+'</button></div><div class="cal-g">';
  ['L','M','M','J','V','S','D'].forEach(function(d){h+='<div class="cal-w">'+d+'</div>'});
  for(var i=0;i<lead;i++)h+='<div class="cd empty"></div>';
  for(var d=1;d<=n;d++){
@@ -469,21 +477,22 @@ function todayView(){
   h+='<section class="card"><p class="eyebrow">Repos</p><h2>Pas de séance prévue</h2>'+(nt?'<p class="mute" style="margin:0">Prochaine : '+DAYS[dow(nd)].toLowerCase()+', '+esc(nt.name)+'.</p>':'')+'<button class="btn soft" data-act="openStart">Faire une séance quand même</button></section>';
  }
  if(S.active||tpl){h+='<div style="height:10px"></div><button class="btn line" data-act="openStart"'+(S.active?' disabled style="opacity:.5"':'')+'>Choisir une autre séance</button>'}
- var mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-di),cells='';
+ var off=ui.wk||0,mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-di+off*7),cells='';
  for(var i=0;i<7;i++){
   var d=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+i),ds=iso(d),p=planFor(ds),t=S.tpls.find(function(x){return x.id===p});
   cells+='<button class="wd'+(ds===tds?' today':'')+'" data-act="dayOpen" data-date="'+ds+'" aria-label="'+DAYS[i]+' '+d.getDate()+' '+MONTHS[d.getMonth()]+'"><small>'+DS[i]+'</small><span class="dots">'+dayDots(ds,tds)+'</span><b'+(t?'':' class="off"')+'>'+(t?esc(t.name):'–')+'</b></button>';
  }
  var sun=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6);
  var wk=SESS.filter(function(s){return s.date>=iso(mon)&&s.date<=iso(sun)}).length;
- h+='<div class="shd"><h2>Cette semaine</h2><span class="mute small">'+wk+' séance'+(wk>1?'s':'')+' faite'+(wk>1?'s':'')+'</span></div><div class="week">'+cells+'</div>';
+ var wtitle=off===0?'Cette semaine':off===-1?'Semaine dernière':off===1?'Semaine prochaine':'Semaine du '+mon.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+ h+='<div class="shd"><h2>'+wtitle+'</h2><div class="gnav">'+(off?'<button class="pill" data-act="wkNow">Aujourd\'hui</button>':'<span class="mute small">'+wk+' séance'+(wk>1?'s':'')+' faite'+(wk>1?'s':'')+'</span>')+'<button class="ibtn sm" data-act="wkPrev" aria-label="Semaine précédente">'+svg('back',20)+'</button><button class="ibtn sm" data-act="wkNext" aria-label="Semaine suivante">'+svg('chev',20)+'</button></div></div><div class="week" data-swipe="week">'+cells+'</div>';
  h+='<div class="shd"><h2>Calendrier</h2></div>'+calHTML();
  return h;
 }
 function dayView(){
  var ds=ui.route.date,d=pd(ds),tds=todayISO(),done=sessOn(ds),isToday=ds===tds;
  var title=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
- var h='<div class="screen"><div class="top"><button class="ibtn" data-act="dayBack" aria-label="Retour">'+svg('back')+'</button><div class="ttl"><b>'+esc(title)+'</b><span>'+(isToday?'Aujourd\'hui':ds>tds?'À venir':'Passé')+'</span></div><span></span></div><div class="scroll">';
+ var h='<div class="screen"><div class="top"><button class="ibtn" data-act="dayBack" aria-label="Retour">'+svg('back')+'</button><div class="ttl"><b>'+esc(title)+'</b><span>'+(isToday?'Aujourd\'hui':ds>tds?'À venir':'Passé')+'</span></div><div style="display:flex"><button class="ibtn" data-act="dayPrev" aria-label="Jour précédent">'+svg('back',22)+'</button><button class="ibtn" data-act="dayNext" aria-label="Jour suivant">'+svg('chev',22)+'</button></div></div><div class="scroll">';
  h+='<div class="shd" style="margin-top:4px"><h2>Séances faites</h2></div>';
  if(done.length){
   h+='<div class="list">';
@@ -523,6 +532,7 @@ function programView(){
  });
  h+='</div>';
  h+='<div class="shd"><h2>Réglages</h2></div><div class="card" style="flex-direction:row;align-items:center;justify-content:space-between"><div><b>Repos entre séries</b><div class="mute small">Le minuteur démarre quand tu coches une série</div></div><div class="stp"><button class="ibtn" data-act="restSet" data-d="-15" aria-label="Moins 15 secondes">'+svg('minus',20)+'</button><b class="num">'+S.set.rest+'s</b><button class="ibtn" data-act="restSet" data-d="15" aria-label="Plus 15 secondes">'+svg('plus',20)+'</button></div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Sens du balayage</b><div class="mute small">Pour changer d\'onglet, de semaine, de mois ou de jour</div></div><div class="seg"><button data-act="flip" data-v="0" aria-pressed="'+(!S.set.flip)+'">Gauche = suivant</button><button data-act="flip" data-v="1" aria-pressed="'+(!!S.set.flip)+'">Droite = suivant</button></div></div>';
  h+='<div class="shd"><h2>Sauvegarde</h2></div><div class="card"><p class="mute small" style="margin:0">Tes données restent sur ce téléphone. Exporte un fichier de temps en temps pour ne rien perdre, ou pour changer de téléphone.</p><div class="row2"><button class="btn soft" data-act="exportData">Exporter</button><label class="btn soft" for="imp" style="cursor:pointer">Importer</label></div><input type="file" id="imp" accept="application/json,.json" data-f="imp" hidden></div>';
  return h;
 }
@@ -736,6 +746,7 @@ function render(){
  app.innerHTML=h+sheetHTML()+modalHTML();
  var sc2=app.querySelector('.scroll');if(sc2&&key===lastKey)sc2.scrollTop=st;
  lastKey=key;updateRest();syncHist();
+ if(ui.anim){var ae=app.querySelector(ui.animSel||'.scroll');if(ae){ae.classList.remove('sl-next','sl-prev');void ae.offsetWidth;ae.classList.add('sl-'+ui.anim)}ui.anim=null}
  if(ui.sheet&&ui.sheet.name==='picker'){var q=document.getElementById('pq');if(q&&!q.value)q.focus()}
 }
 function updateRest(){
@@ -752,13 +763,20 @@ setInterval(function(){
 
 /* ---------- events ---------- */
 var A={
- tab:function(b){ui.tab=b.dataset.t;ui.sel=null;render()},
+ tab:function(b){var o=TABS.indexOf(ui.tab),n=TABS.indexOf(b.dataset.t);ui.tab=b.dataset.t;ui.sel=null;ui.anim=n>=o?'next':'prev';ui.animSel='.scroll';render()},
  openStart:function(b){if(S.active){toast('Termine ou abandonne la séance en cours d\'abord');return}ui.startDate=(b&&b.dataset&&b.dataset.date)||null;ui.sheet={name:'start'};render()},
  closeSheet:function(){ui.sheet=null;ui.startDate=null;render()},
  dayOpen:function(b){ui.route={name:'day',date:b.dataset.date};ui.sheet=null;render()},
  dayBack:function(){ui.route={name:'main'};ui.tab='today';render()},
- calPrev:function(){var c=ui.cal;c.m--;if(c.m<0){c.m=11;c.y--}render()},
- calNext:function(){var c=ui.cal;c.m++;if(c.m>11){c.m=0;c.y++}render()},
+ calPrev:function(){calStep(-1)},
+ calNext:function(){calStep(1)},
+ calNow:function(){ui.cal=null;ui.anim='prev';ui.animSel='.cal-g';render()},
+ wkPrev:function(){ui.wk=(ui.wk||0)-1;ui.anim='prev';ui.animSel='.week';render()},
+ wkNext:function(){ui.wk=(ui.wk||0)+1;ui.anim='next';ui.animSel='.week';render()},
+ wkNow:function(){ui.wk=0;ui.anim='prev';ui.animSel='.week';render()},
+ dayPrev:function(){shiftDay(-1)},
+ dayNext:function(){shiftDay(1)},
+ flip:function(b){S.set.flip=b.dataset.v==='1';dirtyCfg();render()},
  tplColor:function(b){curTpl().color=b.dataset.c;dirtyCfg();render()},
  closeModal:function(){ui.modal=null;render()},
  start:function(b){var d=b.dataset.today?null:ui.startDate;ui.startDate=null;startSession(b.dataset.id,d)},
@@ -839,6 +857,31 @@ function addPicked(id){
  else{var t=curTpl();t.items.push({id:uid(),ex:id,sets:3,reps:'8-12'});dirtyCfg()}
  ui.sheet=null;render();
 }
+var TABS=['today','prog','hist','chart'];
+function calStep(d){var c=ui.cal;if(!c)return;c.m+=d;if(c.m<0){c.m=11;c.y--}if(c.m>11){c.m=0;c.y++}ui.anim=d>0?'next':'prev';ui.animSel='.cal-g';render()}
+function shiftDay(d){var x=pd(ui.route.date);x.setDate(x.getDate()+d);ui.route={name:'day',date:iso(x)};ui.anim=d>0?'next':'prev';ui.animSel='.scroll';render()}
+function swipe(dir,el){
+ if(ui.modal||ui.sheet)return;
+ if(el.closest&&el.closest('input,select,textarea'))return;
+ var d=S.set.flip?-dir:dir,reg=el.closest&&el.closest('[data-swipe]'),k=reg&&reg.dataset.swipe;
+ if(k==='week'){ui.wk=(ui.wk||0)+d;ui.anim=d>0?'next':'prev';ui.animSel='.week';render();return}
+ if(k==='cal'){calStep(d);return}
+ if(ui.route.name==='main'){var i=TABS.indexOf(ui.tab)+d;if(i<0||i>=TABS.length)return;ui.tab=TABS[i];ui.sel=null;ui.anim=d>0?'next':'prev';ui.animSel='.scroll';render();return}
+ if(ui.route.name==='day')shiftDay(d);
+}
+var t0=null;
+app.addEventListener('touchstart',function(e){
+ if(e.touches.length!==1){t0=null;return}
+ var t=e.touches[0];
+ if(t.clientX<24||t.clientX>window.innerWidth-24){t0=null;return}
+ t0={x:t.clientX,y:t.clientY,t:Date.now(),el:e.target};
+},{passive:true});
+app.addEventListener('touchend',function(e){
+ if(!t0)return;var t=e.changedTouches[0],dx=t.clientX-t0.x,dy=t.clientY-t0.y,el=t0.el,dt=Date.now()-t0.t;t0=null;
+ if(Math.abs(dx)<60||Math.abs(dx)<1.6*Math.abs(dy)||dt>800)return;
+ swipe(dx<0?1:-1,el);
+},{passive:true});
+app.addEventListener('touchcancel',function(){t0=null},{passive:true});
 app.addEventListener('click',function(e){
  var ch=e.target.closest('svg[data-chart]');
  if(ch){

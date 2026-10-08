@@ -107,8 +107,8 @@ h3{margin:0;font:700 22px/1.1 var(--disp);text-transform:uppercase}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* tab bar and top bar */
-.nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surf);border-top:1px solid var(--line)}
-.nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;font-size:12px;font-weight:600;color:var(--mute)}
+.nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surf);border-top:1px solid var(--line)}
+.nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;font-size:11.5px;min-width:0;font-weight:600;color:var(--mute)}
 .nav button[aria-current="page"]{color:var(--acc)}
 .top{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
 .top .ttl{min-width:0;display:flex;flex-direction:column}
@@ -143,8 +143,12 @@ button.sn.t-f{background:#E5484D33;color:#FF6A6F}
 .modal .stats div{background:var(--surf2)}
 .gnav+.week .wd b.num{font-size:16px}
 .empty-h{margin:10px 0 0}
+.crown{color:#F5C518;display:inline-flex;vertical-align:-2px;margin-left:6px}
+.crown svg{fill:currentColor;stroke:currentColor;stroke-width:1.2}
+.snw{position:relative;display:block}
+.snw .crown{position:absolute;top:-9px;right:-7px;margin:0;pointer-events:none;filter:drop-shadow(0 0 2px rgba(0,0,0,.4))}
 .sum-l{display:flex;align-items:baseline;gap:10px}
-.sum-l b{font:700 26px var(--disp);color:var(--acc);min-width:64px}
+.sum-l b{font:700 26px var(--disp);color:var(--acc);min-width:64px;white-space:nowrap}
 .sum-l span{color:var(--mute);font-size:15px}
 .sum-pr h3{margin:4px 0 2px;font:700 15px var(--disp);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .sum-pr small{color:var(--acc);font-weight:700;margin-left:6px}
@@ -155,7 +159,7 @@ button.sn.t-f{background:#E5484D33;color:#FF6A6F}
 .srow.done .chk{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 .srow.done .in{border-color:var(--acc)}
 .sbar{display:flex;gap:8px;padding-top:8px}
-.sbar .btn{min-height:44px;font-size:15px}
+.sbar .btn{min-height:44px;font-size:15px;flex:1;min-width:0;padding:0 8px}
 .note{padding-top:8px}
 .rest{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surf2);border-top:1px solid var(--line)}
 .rest b{font:700 30px/1 var(--disp);color:var(--acc);min-width:64px}
@@ -277,7 +281,9 @@ var IC={
  chart:'<path d="M4 19V5M4 19h16"/><path d="M8 14l3-3 3 2 5-6"/>',
  back:'<path d="M15 5l-7 7 7 7"/>',up:'<path d="M6 14l6-6 6 6"/>',down:'<path d="M6 10l6 6 6-6"/>',
  x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
- note:'<path d="M5 5h14v10H9l-4 4z"/>',trash:'<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',chev:'<path d="M9 5l7 7-7 7"/>'
+ note:'<path d="M5 5h14v10H9l-4 4z"/>',trash:'<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',chev:'<path d="M9 5l7 7-7 7"/>',
+ set:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/>',
+ crown:'<path d="M3.5 8.5l4.2 3.8L12 5.5l4.3 6.8 4.2-3.8-1.7 10H5.2z"/>'
 };
 function svg(n,s){s=s||22;return '<svg class="ic" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[n]+'</svg>'}
 function toast(m){Array.prototype.forEach.call(document.querySelectorAll('.toast'),function(e){e.remove()});var t=document.createElement('div');t.className='toast';t.textContent=m;var c=document.getElementById('toasts');c.appendChild(t);setTimeout(function(){t.remove()},2600)}
@@ -285,7 +291,7 @@ function toast(m){Array.prototype.forEach.call(document.querySelectorAll('.toast
 /* ---------- seed (programme + dernières charges relevées dans FitNotes) ---------- */
 function seed(){
  var L={};
- function mk(id,name,ref){L[id]={name:name,ref:ref}}
+ function mk(id,name,ref){L[id]={name:name}}
  mk('incdb','Incline DB bench press',[[24,13],[38,4],[42,13],[42,9]]);
  mk('ham','Incline hammer chest press',[[95,11],[90,8],[80,11],[70,11]]);
  mk('vbar','V-bar push down',[[32.5,14],[32.5,12],[30,13],[27.5,14]]);
@@ -315,6 +321,7 @@ function normalize(s){
  while(s.sched.length<7)s.sched.push(null);
  s.set=s.set||{rest:90};if(!s.set.rest)s.set.rest=90;
  s.upd=s.upd||0;if(s.active===undefined)s.active=null;
+ Object.keys(s.lib).forEach(function(k){delete s.lib[k].ref});
  s.plan=s.plan||{};s.bw=Array.isArray(s.bw)?s.bw:[];
  s.tpls.forEach(function(t,i){if(!t.color)t.color=DEFC[t.id]||PAL[i%PAL.length]});
  return s;
@@ -430,6 +437,78 @@ function exKcalLine(k){var l=S.lib[k]||{},v=kcalSet(k,10,bwAt(todayISO())||75);r
 function bwSeries(range){
  var lim=range==='3m'?Date.now()-92*864e5:range==='6m'?Date.now()-183*864e5:0;
  return S.bw.filter(function(x){return pd(x.d).getTime()>=lim}).map(function(x){return {d:pd(x.d),ds:x.d,v:x.kg,best:'',name:'Pesée'}});
+}
+function prevBestE1(ex,c){var b=0;SESS.forEach(function(x){if(x.id===c.id||x.date>c.date)return;var v=bestE1(ex,x.items);if(v>b)b=v});return b}
+function crownIdx(sets,prev,needDone){
+ if(!(prev>0))return -1;var bi=-1,bv=prev;
+ sets.forEach(function(x,j){if(x.t==='w')return;if(needDone&&!x.done)return;var k=num(x.kg),r=num(x.reps);if(!(k>0&&r>0))return;var v=e1(k,r);if(v>bv+0.05){bv=v;bi=j}});
+ return bi;
+}
+function crownHTML(n){return '<span class="crown" aria-label="Record">'+svg('crown',n||14)+'</span>'}
+function parseCSV(t){
+ var rows=[],row=[],f='',q=false;
+ for(var i=0;i<t.length;i++){
+  var c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;
+  else if(c===','){row.push(f);f=''}
+  else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.length>1||row[0]!=='')rows.push(row);row=[]}
+  else f+=c;
+ }
+ if(f!==''||row.length){row.push(f);rows.push(row)}
+ return rows;
+}
+function nk(n){return String(n).toLowerCase().replace(/dumbbells?/g,'db').replace(/[^a-z0-9]/g,'')}
+var CATMAP={chest:'pecs',back:'dos',legs:'jambes',shoulders:'epaules',biceps:'biceps',triceps:'triceps',abs:'abdos',calves:'mollets',forearms:'avbras'};
+function fnPlan(text){
+ var rows=parseCSV(text.replace(/^﻿/,''));if(rows.length<2)return null;
+ var h=rows[0].map(function(x){return x.trim().toLowerCase()});
+ var iD=h.indexOf('date'),iE=h.indexOf('exercise'),iC=h.indexOf('category'),iW=h.indexOf('weight'),iU=h.indexOf('weight unit'),iR=h.indexOf('reps');
+ if(iD<0||iE<0||iR<0)return null;
+ var byKey={};Object.keys(S.lib).forEach(function(k){byKey[nk(S.lib[k].name)]=k});
+ var days={},order=[],newEx={},skipped=0;
+ for(var r=1;r<rows.length;r++){
+  var w=rows[r];if(w.length<=iR)continue;
+  var reps=parseInt(w[iR],10),ds=(w[iD]||'').trim(),name=(w[iE]||'').trim();
+  if(!name||!/^\d{4}-\d{2}-\d{2}$/.test(ds)||!(reps>0)){skipped++;continue}
+  var kg=iW>=0?num(w[iW]):0;if(isNaN(kg))kg=0;
+  if(iU>=0&&/^lb/i.test((w[iU]||'').trim()))kg=Math.round(kg*0.45359237*10)/10;
+  var key=nk(name),id=byKey[key];
+  if(!id){var ne=newEx[key];if(!ne)ne=newEx[key]={id:'x'+uid(),name:name,cat:iC>=0?(w[iC]||'').trim():'',last:ds};if(ds>ne.last)ne.last=ds;id=ne.id}
+  var d=days[ds];if(!d){d=days[ds]={ds:ds,items:[],idx:{}};order.push(ds)}
+  var it=d.idx[id];if(!it){it=d.idx[id]={ex:id,note:'',sets:[]};d.items.push(it)}
+  it.sets.push({kg:kg,reps:reps});
+ }
+ function sig(items){return items.map(function(it){return it.ex+':'+it.sets.map(function(x){return x.kg+'x'+x.reps}).join(',')}).sort().join('|')}
+ var exist={};SESS.forEach(function(x){(exist[x.date]=exist[x.date]||{})[sig(x.items)]=1});
+ var sess=[],dup=0,nsets=0;
+ order.sort().forEach(function(ds){
+  var d=days[ds];if(exist[ds]&&exist[ds][sig(d.items)]){dup++;return}
+  var ids={};d.items.forEach(function(it){ids[it.ex]=1;nsets+=it.sets.length});
+  var best=null,bs=0,nid=Object.keys(ids).length;
+  S.tpls.forEach(function(t){
+   var tids={};t.items.forEach(function(i){tids[i.ex]=1});
+   var tn=Object.keys(tids).length,inter=0;Object.keys(ids).forEach(function(k){if(tids[k])inter++});
+   var uni=tn+nid-inter,sc=uni?inter/uni:0;if(sc>bs){bs=sc;best=t}
+  });
+  if(best&&bs>=0.5){d.tplId=best.id;d.name=best.name}else{d.tplId=null;d.name='Séance FitNotes'}
+  sess.push(d);
+ });
+ var used={};sess.forEach(function(d){d.items.forEach(function(it){used[it.ex]=1})});
+ Object.keys(newEx).forEach(function(k){if(!used[newEx[k].id])delete newEx[k]});
+ return {sess:sess,newEx:newEx,dup:dup,skipped:skipped,nsets:nsets,from:sess.length?sess[0].ds:'',to:sess.length?sess[sess.length-1].ds:''};
+}
+function fnApply(pl){
+ var cutoff=iso(new Date(Date.now()-183*864e5));
+ Object.keys(pl.newEx).forEach(function(k){
+  var e=pl.newEx[k],l={name:e.name},m=CATMAP[e.cat.toLowerCase()];
+  if(m)l.mus=m;if(e.last<cutoff)l.hidden=true;S.lib[e.id]=l;
+ });
+ pl.sess.forEach(function(d){SESS.push({id:uid(),date:d.ds,tplId:d.tplId,name:d.name,items:d.items.map(function(it){return {ex:it.ex,note:'',sets:it.sets}}),start:null,dur:null,upd:Date.now()})});
+ sortSess();dirtyCfg();saveLocal();
+}
+function fnCard(){
+ return '<div class="card" style="margin-top:10px"><div><b>Importer depuis FitNotes</b><div class="mute small">Dans FitNotes : Réglages → exporter vers un tableur (CSV). Choisis ensuite ce fichier ici. Ton historique et tes courbes se remplissent.</div></div><label class="btn soft" for="fnf" style="cursor:pointer">Choisir le fichier CSV</label><input type="file" id="fnf" accept=".csv,text/csv,text/plain" data-f="fnfile" hidden></div>';
 }
 function sstats(s){var sets=0,vol=0;s.items.forEach(function(it){it.sets.forEach(function(x){if(x.t==='w')return;sets++;vol+=x.kg*x.reps})});return {sets:sets,vol:vol}}
 function tcol(id){var t=S.tpls.find(function(x){return x.id===id});return t&&t.color?t.color:'var(--acc)'}
@@ -639,13 +718,6 @@ function programView(){
   h+='<div class="item" style="padding:6px 6px 6px 16px"><div class="main" data-act="exSet" data-ex="'+k+'" role="button" tabindex="0" style="cursor:pointer;padding:6px 0"><b>'+esc(S.lib[k].name)+'</b><span>'+nt+' séance'+(nt>1?'s':'')+' · '+nh+' enregistrement'+(nh>1?'s':'')+'</span><span>'+exKcalLine(k)+'</span></div><button class="ibtn bad" data-act="libDelAsk" data-id="'+k+'" aria-label="Supprimer '+esc(S.lib[k].name)+'">'+svg('trash',22)+'</button></div>';
  });
  h+='</div>';
- h+='<div class="shd"><h2>Réglages</h2></div><div class="card" style="flex-direction:row;align-items:center;justify-content:space-between"><div><b>Repos entre séries</b><div class="mute small">Le minuteur démarre quand tu coches une série</div></div><div class="stp"><button class="ibtn" data-act="restSet" data-d="-15" aria-label="Moins 15 secondes">'+svg('minus',20)+'</button><b class="num">'+S.set.rest+'s</b><button class="ibtn" data-act="restSet" data-d="15" aria-label="Plus 15 secondes">'+svg('plus',20)+'</button></div></div>';
- h+='<div class="card" style="margin-top:10px"><div><b>Écran allumé</b><div class="mute small">Pendant une séance en cours</div></div><div class="seg"><button data-act="setOpt" data-k="wake" data-v="1" aria-pressed="'+(S.set.wake!==false)+'">Oui</button><button data-act="setOpt" data-k="wake" data-v="0" aria-pressed="'+(S.set.wake===false)+'">Non</button></div></div>';
- h+='<div class="card" style="margin-top:10px"><div><b>Fin de repos écran verrouillé</b><div class="mute small">Notification + vibration, via un son silencieux qui garde l\'app active. Peut mettre ta musique en pause.</div></div><div class="seg"><button data-act="setOpt" data-k="notif" data-v="1" aria-pressed="'+(S.set.notif!==false)+'">Oui</button><button data-act="setOpt" data-k="notif" data-v="0" aria-pressed="'+(S.set.notif===false)+'">Non</button></div></div>';
- h+='<div class="card" style="margin-top:10px"><div><b>Vibration</b><div class="mute small">À la fin du temps de repos</div></div><div class="seg"><button data-act="setOpt" data-k="vib" data-v="1" aria-pressed="'+(S.set.vib!==false)+'">Oui</button><button data-act="setOpt" data-k="vib" data-v="0" aria-pressed="'+(S.set.vib===false)+'">Non</button></div></div>';
- h+='<div class="card" style="margin-top:10px"><div><b>Sens du balayage</b><div class="mute small">Pour changer d\'onglet ou de jour</div></div><div class="seg"><button data-act="flip" data-v="0" aria-pressed="'+(!S.set.flip)+'">Gauche = suivant</button><button data-act="flip" data-v="1" aria-pressed="'+(!!S.set.flip)+'">Droite = suivant</button></div></div>';
- h+='<div class="shd"><h2>Sauvegarde</h2></div><div class="card"><p class="mute small" style="margin:0">Tes données restent sur ce téléphone. Exporte un fichier de temps en temps pour ne rien perdre, ou pour changer de téléphone.</p><div class="row2"><button class="btn soft" data-act="exportData">Exporter</button><label class="btn soft" for="imp" style="cursor:pointer">Importer</label></div><input type="file" id="imp" accept="application/json,.json" data-f="imp" hidden></div>';
- h+=gUI();
  return h;
 }
 
@@ -654,13 +726,14 @@ function historyView(){
  if(!SESS.length){
   return h+'<div class="empty"><h2>Rien d\'enregistré pour l\'instant</h2><p>Tes séances apparaîtront ici dès que tu en termines une. Pour reprendre ton suivi, ajoute une séance passée : tu peux changer sa date dans l\'écran de saisie.</p><button class="btn" data-act="openStart">Ajouter une séance</button></div>';
  }
- var cur='';
- SESS.forEach(function(s){
+ var cur='',lim=ui.hn||40;
+ SESS.slice(0,lim).forEach(function(s){
   var d=pd(s.date),m=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   if(m!==cur){cur=m;h+='<div class="month">'+m+'</div>'}
   var st=sstats(s);
   h+='<button class="item" style="margin-bottom:10px" data-act="sessOpen" data-id="'+s.id+'"><div class="date"><b>'+d.getDate()+'</b><span>'+d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')+'</span></div><div class="main"><b>'+dotHTML(tcol(s.tplId))+' '+esc(s.name)+'</b><span>'+s.items.length+' exercices · '+st.sets+' séries'+(s.dur?' · '+s.dur+' min':'')+'</span></div><div class="side num">'+Math.round(st.vol).toLocaleString('fr-FR')+' kg</div></button>';
  });
+ if(SESS.length>lim)h+='<button class="btn soft" data-act="histMore">Afficher plus ('+(SESS.length-lim)+' restantes)</button>';
  return h;
 }
 
@@ -740,9 +813,22 @@ function progressView(){
  return h;
 }
 
+function settingsView(){
+ var h='<header class="hd"><div><p class="eyebrow">Application</p><h1>Réglages</h1></div></header>';
+ h+='<div class="shd" style="margin-top:4px"><h2>Préférences</h2></div><div class="card" style="flex-direction:row;align-items:center;justify-content:space-between"><div><b>Repos entre séries</b><div class="mute small">Le minuteur démarre quand tu coches une série</div></div><div class="stp"><button class="ibtn" data-act="restSet" data-d="-15" aria-label="Moins 15 secondes">'+svg('minus',20)+'</button><b class="num">'+S.set.rest+'s</b><button class="ibtn" data-act="restSet" data-d="15" aria-label="Plus 15 secondes">'+svg('plus',20)+'</button></div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Écran allumé</b><div class="mute small">Pendant une séance en cours</div></div><div class="seg"><button data-act="setOpt" data-k="wake" data-v="1" aria-pressed="'+(S.set.wake!==false)+'">Oui</button><button data-act="setOpt" data-k="wake" data-v="0" aria-pressed="'+(S.set.wake===false)+'">Non</button></div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Fin de repos écran verrouillé</b><div class="mute small">Notification + vibration, via un son silencieux qui garde l\'app active. Peut mettre ta musique en pause.</div></div><div class="seg"><button data-act="setOpt" data-k="notif" data-v="1" aria-pressed="'+(S.set.notif!==false)+'">Oui</button><button data-act="setOpt" data-k="notif" data-v="0" aria-pressed="'+(S.set.notif===false)+'">Non</button></div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Vibration</b><div class="mute small">À la fin du temps de repos</div></div><div class="seg"><button data-act="setOpt" data-k="vib" data-v="1" aria-pressed="'+(S.set.vib!==false)+'">Oui</button><button data-act="setOpt" data-k="vib" data-v="0" aria-pressed="'+(S.set.vib===false)+'">Non</button></div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Sens du balayage</b><div class="mute small">Pour changer d\'onglet ou de jour</div></div><div class="seg"><button data-act="flip" data-v="0" aria-pressed="'+(!S.set.flip)+'">Gauche = suivant</button><button data-act="flip" data-v="1" aria-pressed="'+(!!S.set.flip)+'">Droite = suivant</button></div></div>';
+ h+='<div class="shd"><h2>Sauvegarde</h2></div><div class="card"><p class="mute small" style="margin:0">Tes données restent sur ce téléphone. Exporte un fichier de temps en temps pour ne rien perdre, ou pour changer de téléphone.</p><div class="row2"><button class="btn soft" data-act="exportData">Exporter</button><label class="btn soft" for="imp" style="cursor:pointer">Importer</label></div><input type="file" id="imp" accept="application/json,.json" data-f="imp" hidden></div>';
+ h+=gUI();
+ h+='<div class="shd"><h2>Importer</h2></div>'+fnCard();
+ return h;
+}
+
 function mainView(){
- var t=ui.tab,body=t==='today'?todayView():t==='prog'?programView():t==='hist'?historyView():progressView();
- var tabs=[['today','Accueil','today'],['prog','Programme','prog'],['hist','Historique','hist'],['chart','Progrès','chart']];
+ var t=ui.tab,body=t==='today'?todayView():t==='prog'?programView():t==='hist'?historyView():t==='set'?settingsView():progressView();
+ var tabs=[['today','Accueil','today'],['prog','Programme','prog'],['hist','Historique','hist'],['chart','Progrès','chart'],['set','Réglages','set']];
  return '<div class="screen"><div class="scroll">'+body+'</div><nav class="nav" aria-label="Navigation">'+tabs.map(function(x){return '<button data-act="tab" data-t="'+(x[0]==='chart'?'chart':x[0])+'"'+((t===x[0]||(t==='chart'&&x[0]==='chart'))?' aria-current="page"':'')+'>'+svg(x[2],24)+x[1]+'</button>'}).join('')+'</nav></div>';
 }
 
@@ -758,11 +844,11 @@ function loggerView(){
   h+='<section class="ex"><div class="ex-h"><div><h3>'+esc(exName(it.ex))+'</h3>'+(it.target?'<p>Objectif '+esc(it.target)+'</p>':'')+(it.sug?'<p class="sug">↑ +'+fmt(it.sug.inc)+' kg · '+it.sug.hi+' reps atteintes partout la dernière fois</p>':'')+exChip(it.ex)+'</div><div class="tools"><button class="ibtn" data-act="exNote" data-i="'+i+'" aria-label="Note">'+svg('note',20)+'</button><button class="ibtn" data-act="exUp" data-i="'+i+'" aria-label="Monter">'+svg('up',20)+'</button><button class="ibtn" data-act="exDown" data-i="'+i+'" aria-label="Descendre">'+svg('down',20)+'</button><button class="ibtn bad" data-act="exDel" data-i="'+i+'" aria-label="Retirer l\'exercice">'+svg('x',20)+'</button></div></div>';
   if(it.noteOpen||it.note)h+='<div class="note"><input class="in t" id="n-'+it.id+'" data-f="note" data-i="'+i+'" placeholder="Note (réglage machine, sensation…)" value="'+esc(it.note)+'"></div>';
   h+='<div class="srow head"><span>#</span><span>Préc.</span><span>kg</span><span>reps</span><span></span></div>';
-  var kk=0;
+  var kk=0,ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
   it.sets.forEach(function(x,j){
    var nrm=isNorm(x),p=nrm?prev[kk]:null;if(nrm)kk++;
    var lab=x.t==='w'?'É':x.t==='d'?'D':String(kk),tn=x.t==='w'?'échauffement':x.t==='d'?'dégressive':x.t==='f'?'échec':'normale';
-   h+='<div class="srow'+(x.done?' done':'')+'"><button class="sn'+(x.t?' t-'+x.t:'')+'" data-act="setType" data-i="'+i+'" data-j="'+j+'" aria-label="Série '+(j+1)+', '+tn+'. Appuyer pour changer le type">'+lab+'</button><span class="pv num">'+(p?fmt(p[0])+' × '+p[1]:'–')+'</span><input class="in num" id="k-'+it.id+'-'+j+'" inputmode="decimal" aria-label="Charge série '+(j+1)+'" data-f="kg" data-i="'+i+'" data-j="'+j+'" value="'+esc(x.kg)+'"><input class="in num" id="r-'+it.id+'-'+j+'" inputmode="numeric" aria-label="Répétitions série '+(j+1)+'" data-f="reps" data-i="'+i+'" data-j="'+j+'" value="'+esc(x.reps)+'"><button class="chk" data-act="done" data-i="'+i+'" data-j="'+j+'" aria-pressed="'+!!x.done+'" aria-label="Série '+(j+1)+' faite">'+svg('check',24)+'</button></div>';
+   h+='<div class="srow'+(x.done?' done':'')+'"><span class="snw"><button class="sn'+(x.t?' t-'+x.t:'')+'" data-act="setType" data-i="'+i+'" data-j="'+j+'" aria-label="Série '+(j+1)+', '+tn+'. Appuyer pour changer le type">'+lab+'</button>'+(j===ci?crownHTML(20):'')+'</span><span class="pv num">'+(p?fmt(p[0])+' × '+p[1]:'–')+'</span><input class="in num" id="k-'+it.id+'-'+j+'" inputmode="decimal" aria-label="Charge série '+(j+1)+'" data-f="kg" data-i="'+i+'" data-j="'+j+'" value="'+esc(x.kg)+'"><input class="in num" id="r-'+it.id+'-'+j+'" inputmode="numeric" aria-label="Répétitions série '+(j+1)+'" data-f="reps" data-i="'+i+'" data-j="'+j+'" value="'+esc(x.reps)+'"><button class="chk" data-act="done" data-i="'+i+'" data-j="'+j+'" aria-pressed="'+!!x.done+'" aria-label="Série '+(j+1)+' faite">'+svg('check',24)+'</button></div>';
   });
   h+='<div class="sbar"><button class="btn soft" data-act="setAdd" data-i="'+i+'">'+svg('plus',18)+'Série</button><button class="btn soft" data-act="setDel" data-i="'+i+'">'+svg('minus',18)+'Série</button><button class="btn soft" data-act="warm" data-i="'+i+'">'+(it.sets.some(function(x){return x.t==='w'})?'Sans échauff.':'Échauffement')+'</button></div></section>';
  });
@@ -794,7 +880,7 @@ function sessView(){
  h+='<div class="stats" style="margin:0 0 16px"><div><span>Exercices</span><b class="num">'+s.items.length+'</b></div><div><span>Séries</span><b class="num">'+st.sets+'</b></div><div><span>Volume</span><b class="num">'+Math.round(st.vol).toLocaleString('fr-FR')+'</b></div></div>';
  h+='<div class="sum-l" style="margin:-4px 0 16px"><b class="num">≈ '+kcalSess(s)+'</b><span>kcal brûlées (estimation'+(bwAt(s.date)?'':' · poids par défaut 75 kg')+')</span></div>';
  s.items.forEach(function(it){
-  h+='<section class="ex"><h3>'+esc(exName(it.ex))+'</h3>'+(it.note?'<p class="mute small" style="margin:4px 0 0">'+esc(it.note)+'</p>':'')+'<div style="margin-top:6px">'+(function(){var k=0;return it.sets.map(function(x){if(isNorm(x))k++;return '<div class="xl"><span class="t mute">'+setLabel(x,k)+'</span><span class="v num">'+fmt(x.kg)+' kg × '+x.reps+'</span></div>'}).join('')})()+'</div></section>';
+  h+='<section class="ex"><h3>'+esc(exName(it.ex))+'</h3>'+(it.note?'<p class="mute small" style="margin:4px 0 0">'+esc(it.note)+'</p>':'')+'<div style="margin-top:6px">'+(function(){var k=0,ci=crownIdx(it.sets,prevBestE1(it.ex,s),false);return it.sets.map(function(x,j){if(isNorm(x))k++;return '<div class="xl"><span class="t mute">'+setLabel(x,k)+'</span><span class="v num">'+fmt(x.kg)+' kg × '+x.reps+(j===ci?crownHTML(20):'')+'</span></div>'}).join('')})()+'</div></section>';
  });
  h+='<div class="list" style="margin-top:6px"><button class="btn" data-act="sessRedo" data-id="'+s.id+'">Refaire cette séance</button><button class="btn soft" data-act="sessEdit" data-id="'+s.id+'">Modifier</button><button class="btn danger" data-act="sessDelAsk" data-id="'+s.id+'">Supprimer</button></div></div></div>';
  return h;
@@ -997,6 +1083,7 @@ var A={
   var x=ui.cur.items[+b.dataset.i].sets[+b.dataset.j];x.done=!x.done;
   var row=b.closest('.srow');row.classList.toggle('done',x.done);b.setAttribute('aria-pressed',x.done);
   if(x.done){var rb=restFor(ui.cur.items[+b.dataset.i].ex);ui.rest={end:Date.now()+(x.t==='w'?Math.min(60,rb):rb)*1000};updateRest();armRest();keepAlive(true);askNotif()}
+  updCrown(+b.dataset.i);
   touch();
  },
  setType:function(b){
@@ -1016,6 +1103,8 @@ var A={
  },
  exSet:function(b){ui.sheet={name:'exset',ex:b.dataset.ex};render()},
  setOpt:function(b){S.set[b.dataset.k]=b.dataset.v==='1';if(b.dataset.k==='notif'&&b.dataset.v==='1')askNotif();dirtyCfg();render()},
+ fnOk:function(){var pl=ui.fnp;if(!pl)return;ui.fnp=null;fnApply(pl);ui.modal=null;ui.hn=null;render();toast(pl.sess.length+' séance'+(pl.sess.length>1?'s':'')+' importée'+(pl.sess.length>1?'s':''));if(typeof gOn==='function'&&gOn()&&!gSt.hold)gRun(false)},
+ histMore:function(){ui.hn=(ui.hn||40)+60;render()},
  xlvl:function(b){var l=S.lib[ui.sheet.ex],v=+b.dataset.v;if(!l)return;if(v)l.lvl=v;else delete l.lvl;dirtyCfg();render()},
  bwPrev:function(){ui.bwk=(ui.bwk||0)-1;ui.anim='prev';ui.animSel='[data-bw]';render()},
  bwNext:function(){ui.bwk=(ui.bwk||0)+1;ui.anim='next';ui.animSel='[data-bw]';render()},
@@ -1083,7 +1172,14 @@ function addPicked(id){
  else{var t=curTpl();t.items.push({id:uid(),ex:id,sets:3,reps:'8-12'});dirtyCfg()}
  ui.sheet=null;render();
 }
-var TABS=['today','prog','hist','chart'];
+var TABS=['today','prog','hist','chart','set'];
+function updCrown(i){
+ var c=ui.cur,sec=app.querySelectorAll('section.ex')[i];if(!c||!sec)return;
+ var it=c.items[i],had=sec.querySelector('.snw .crown')?1:0;
+ Array.prototype.forEach.call(sec.querySelectorAll('.snw .crown'),function(e){e.remove()});
+ var ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
+ if(ci>=0){var w=sec.querySelectorAll('.srow:not(.head) .snw')[ci];if(w){w.insertAdjacentHTML('beforeend',crownHTML(20));if(!had)toast('Nouveau record !')}}
+}
 function calStep(d){var c=ui.cal;if(!c)return;c.m+=d;if(c.m<0){c.m=11;c.y--}if(c.m>11){c.m=0;c.y++}ui.anim=d>0?'next':'prev';ui.animSel='.cal-g';render()}
 function shiftDay(d){var x=pd(ui.route.date);x.setDate(x.getDate()+d);ui.route={name:'day',date:iso(x)};ui.anim=d>0?'next':'prev';ui.animSel='.scroll';render()}
 function swipe(dir,el){
@@ -1147,6 +1243,21 @@ var C={
    ui.modal={title:'Importer cette sauvegarde ?',text:'Les données actuelles de ce téléphone seront remplacées par '+r.SESS.length+' séance'+(r.SESS.length>1?'s':'')+'.',btns:[{act:'impOk',label:'Remplacer',danger:true},{act:'closeModal',label:'Annuler',line:true}]};render()}catch(e){toast('Fichier non reconnu')}};
   rd.readAsText(f);t.value='';
  },
+ fnfile:function(t){
+  var f=t.files&&t.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=function(){
+   var pl=null;try{pl=fnPlan(String(rd.result))}catch(e){}
+   t.value='';
+   if(!pl){toast('Fichier non reconnu : exporte depuis FitNotes en CSV');return}
+   if(!pl.sess.length){toast(pl.dup?'Tout est déjà importé':'Aucune série à importer');return}
+   var ne=Object.keys(pl.newEx).length;
+   ui.fnp=pl;
+   ui.modal={title:'Importer depuis FitNotes ?',text:pl.sess.length+' séance'+(pl.sess.length>1?'s':'')+' ('+pl.nsets+' séries) du '+dlabel(pl.from)+' '+pl.from.slice(0,4)+' au '+dlabel(pl.to)+' '+pl.to.slice(0,4)+'. '+(ne?(ne>1?ne+' nouveaux exercices seront ajoutés':'1 nouvel exercice sera ajouté')+' (les plus anciens restent cachés de la liste mais gardent leur historique). ':'')+(pl.dup?pl.dup+' séance'+(pl.dup>1?'s':'')+' déjà présente'+(pl.dup>1?'s':'')+' ignorée'+(pl.dup>1?'s':'')+'. ':'')+(pl.skipped?pl.skipped+' ligne'+(pl.skipped>1?'s':'')+' sans répétitions (cardio…) ignorée'+(pl.skipped>1?'s':'')+'.':''),
+    btns:[{act:'fnOk',label:'Importer'},{act:'closeModal',label:'Annuler',line:true}]};
+   render();
+  };
+  rd.readAsText(f);
+ },
  xmus:function(t){var l=S.lib[ui.sheet.ex];if(l){l.mus=t.value;dirtyCfg();render()}}
 };
 var SELQ='input.num,input[data-f=dur],input[data-f=xrest],input[data-f=xinc],input[data-f=xkcal],input[data-f=bwv]';
@@ -1166,7 +1277,7 @@ function gAgo(t){var m=Math.round((Date.now()-t)/60000);if(m<1)return 'à l\'ins
 function gRefresh(){
  ui.sync=gOn()?(gErr?'err':'ok'):'local';
  setSync(ui.sync);
- if(ui.modal||(ui.route.name==='main'&&ui.tab==='prog'))render();
+ if(ui.modal||(ui.route.name==='main'&&ui.tab==='set'))render();
 }
 var _syncText=syncText;
 syncText=function(){if(gOn()){if(gBusy)return 'Sauvegarde…';if(gErr)return 'Drive : '+gErr;return 'Drive · '+(gSt.last?gAgo(gSt.last):'en attente')}return _syncText()};
@@ -1174,7 +1285,7 @@ var _saveLocal=saveLocal;
 saveLocal=function(){_saveLocal();gNeed=true};
 var _commit=commit;
 commit=function(k){_commit(k);if(gOn()&&!gSt.hold)gRun(false)};
-try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='prog'&&ui.route.name==='main')render()})}catch(e){}
+try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='set'&&ui.route.name==='main')render()})}catch(e){}
 
 function gLoad(cb){
  if(window.google&&google.accounts&&google.accounts.oauth2)return cb(true);

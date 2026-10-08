@@ -375,6 +375,39 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
  @keyframes finpop{0%{transform:scale(.85)}55%{transform:scale(1.15)}100%{transform:none}}
  @keyframes finhalo{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.55)}}
 }
+
+/* fonctions 4 */
+.empty.ec{align-items:center;text-align:center;padding:28px 22px}
+.empty.ec.sm{padding:18px 16px}
+.ec-i{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);flex:none}
+.empty.ec.sm .ec-i{width:40px;height:40px}
+.ec-i.big{width:72px;height:72px}
+.welcome{background:var(--surf);border-radius:20px;padding:26px 20px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;margin-bottom:6px}
+.welcome h2{margin:2px 0 0}
+.welcome>p{margin:0;color:var(--mute);max-width:32ch}
+.wsteps{list-style:none;margin:6px 0 4px;padding:0;display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
+.wsteps li{display:flex;align-items:center;gap:12px;background:var(--surf2);border-radius:14px;padding:10px 12px;font-size:14.5px;line-height:1.3}
+.wsteps li>b{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);font:700 15px var(--disp)}
+.wsteps strong{font-weight:700}
+.welcome .btn{width:100%}
+.fresh{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fr{display:flex;align-items:center;gap:8px;background:var(--surf);border-radius:12px;padding:10px 12px;min-height:44px}
+.fr .mdot{margin:0;top:0}
+.fr .fn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:15px}
+.fr b{font:700 17px/1 var(--disp);color:var(--mute);white-space:nowrap}
+.fr.stale{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 45%,transparent)}
+.fr.stale b{color:var(--acc)}
+.platn{display:flex;gap:10px;align-items:flex-start;margin:6px 0 10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#E8A33D 15%,transparent);font-size:13.5px;line-height:1.35}
+.platn .ic{color:#E8A33D;flex:none;margin-top:1px}
+.platn b{font-weight:700}
+.esum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0 4px}
+.esum div{background:var(--surf2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.esum span{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.esum b{font:700 17px var(--disp);white-space:nowrap}
+.edl{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;margin:6px 0 2px;font-size:13px;color:var(--mute)}
+.edl b{font-weight:700}
+.edl .rec{display:inline-flex;align-items:center;gap:2px;color:#F5C518;font-weight:700}
+.edl .rec .crown{margin:0}
 #toasts{position:fixed;left:16px;right:16px;bottom:84px;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:20}
 .toast{background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:15px;max-width:520px;text-align:center}
 @media (prefers-reduced-motion:no-preference){.toast{animation:tin .18s ease-out}@keyframes tin{from{opacity:0;transform:translateY(6px)}}}
@@ -420,7 +453,9 @@ var IC={
  x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
  note:'<path d="M5 5h14v10H9l-4 4z"/>',trash:'<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',chev:'<path d="M9 5l7 7-7 7"/>',
  set:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/>',
- crown:'<path d="M3.5 8.5l4.2 3.8L12 5.5l4.3 6.8 4.2-3.8-1.7 10H5.2z"/>'
+ crown:'<path d="M3.5 8.5l4.2 3.8L12 5.5l4.3 6.8 4.2-3.8-1.7 10H5.2z"/>',
+ dumb:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
+ flat:'<path d="M3 17l5-6 4 3h9M17.5 10.5L21 14l-3.5 3.5"/>'
 };
 function svg(n,s){s=s||22;return '<svg class="ic" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[n]+'</svg>'}
 function toast(m){Array.prototype.forEach.call(document.querySelectorAll('.toast'),function(e){e.remove()});var t=document.createElement('div');t.className='toast';t.textContent=m;var c=document.getElementById('toasts');c.appendChild(t);setTimeout(function(){t.remove()},2600)}
@@ -799,12 +834,76 @@ function calSum(){
  var now=new Date(),pre=now.getFullYear()+'-'+pad(now.getMonth()+1),n=SESS.filter(function(x){return x.date.slice(0,7)===pre}).length;
  return '<button class="cal-sum" data-act="calToggle" aria-expanded="false"><span><b>Calendrier</b><small> · '+MONTHS[now.getMonth()]+' · '+n+' séance'+(n>1?'s':'')+'</small></span>'+svg('down',20)+'</button>';
 }
+function emptyHTML(ic,title,text,btns,sm,style){return '<div class="empty ec'+(sm?' sm':'')+'"'+(style?' style="'+style+'"':'')+'><span class="ec-i">'+svg(ic,sm?22:26)+'</span>'+(title?'<h2>'+title+'</h2>':'')+'<p>'+text+'</p>'+(btns||'')+'</div>'}
+function mDays(){
+ var last={},t0=pd(todayISO()).getTime();
+ SESS.forEach(function(x){
+  var dd=Math.round((t0-pd(x.date).getTime())/864e5);if(dd<0)return;
+  x.items.forEach(function(it){
+   var n=0;it.sets.forEach(function(q){if(q.t!=='w')n++});if(!n)return;
+   var m=musOf(it.ex);if(last[m]===undefined||dd<last[m])last[m]=dd;
+  });
+ });
+ return last;
+}
+function muFresh(){
+ if(!SESS.length)return '';
+ var last=mDays(),ks=Object.keys(last).filter(function(m){return m!=='autre'&&MUS[m]});
+ if(!ks.length)return '';
+ ks.sort(function(a,b){return last[b]-last[a]||MUS[a].n.localeCompare(MUS[b].n,'fr')});
+ var h='<div class="shd"><h2>Dernier travail</h2><span class="mute small">par muscle</span></div><div class="fresh">';
+ ks.forEach(function(m){var d=last[m];h+='<div class="fr'+(d>=7?' stale':'')+'"><i class="mdot" style="background:'+mcol(m)+'"></i><span class="fn">'+MUS[m].n+'</span><b class="num">'+(d===0?'Auj.':d===1?'Hier':d+' j')+'</b></div>'});
+ return h+'</div>';
+}
+function plateau(ex){
+ var v=[],i,j;
+ for(i=SESS.length-1;i>=0;i--){
+  var b=0,rp=0;SESS[i].items.forEach(function(it){if(it.ex===ex)it.sets.forEach(function(x){if(x.t!=='w'&&x.kg>0){var e=e1(x.kg,x.reps);if(e>b){b=e;rp=x.reps}}})});
+  if(b>0)v.push({v:b,d:SESS[i].date,r:rp});
+ }
+ var n=v.length;if(n<5)return null;
+ var mx=v[0].v,r=0;
+ for(j=1;j<n;j++){if(v[j].v>mx*1.01)r=j;if(v[j].v>mx)mx=v[j].v}
+ var k=n-1-r;if(k<4)return null;
+ if((pd(todayISO()).getTime()-pd(v[n-1].d).getTime())/864e5>60)return null;
+ return {k:k,reps:v[n-1].r};
+}
+function platHTML(ex){
+ var p=plateau(ex);if(!p)return '';
+ var tip=p.reps>=12?'Tu fais déjà beaucoup de reps : monte la charge de 2,5 kg et vise 8–10 reps.':p.reps<=5?'Essaie une semaine allégée (−10 %), puis reviens plus fort.':'Essaie une semaine allégée (−10 %) ou change la plage de reps (6–8 ou 10–12).';
+ return '<div class="platn">'+svg('flat',20)+'<span><b>Plateau</b> · aucun record depuis '+p.k+' séances. '+tip+'</span></div>';
+}
+function exSum(s,it){
+ var vol=0,n=0,bi=null,bv=-1;
+ it.sets.forEach(function(x){if(x.t==='w')return;n++;var k=num(x.kg),r=num(x.reps);vol+=k*r;var v=k>0?e1(k,r):r/1000;if(v>bv){bv=v;bi=x}});
+ if(!n)return '';
+ var kg=bi&&num(bi.kg)>0,cur=kg?bv:num(bi.reps),pv=null,pvd=null,i,idx=SESS.indexOf(s);
+ for(i=idx+1;i<SESS.length;i++){
+  var has=SESS[i].items.some(function(y){return y.ex===it.ex&&y.sets.some(function(q){return q.t!=='w'})});
+  if(has){pv=SESS[i];break}
+ }
+ var h='<div class="esum"><div><span>Séries</span><b class="num">'+n+'</b></div><div><span>Meilleure</span><b class="num">'+(kg?fmt(num(bi.kg))+' × '+num(bi.reps):num(bi.reps)+' reps')+'</b></div><div><span>Volume</span><b class="num">'+Math.round(vol).toLocaleString('fr-FR')+'</b></div></div>';
+ var ln='',ci=crownIdx(it.sets,prevBestE1(it.ex,s),false);
+ if(pv){
+  var pc=0;
+  pv.items.forEach(function(y){if(y.ex!==it.ex)return;y.sets.forEach(function(q){if(q.t==='w')return;var k=num(q.kg),r=num(q.reps),v=kg?(k>0?e1(k,r):0):r;if(v>pc)pc=v})});
+  if(pc>0){
+   var dl=(cur-pc)/pc*100,cls=dl>0.5?'up':dl<-0.5?'dn':'';
+   ln+='<span><b class="'+cls+'">'+(dl>0.5?'▲ +':dl<-0.5?'▼ −':'= ')+(cls?fmt(Math.abs(dl))+' %':'stable')+'</b> vs '+dlabel(pv.date)+'</span>';
+  }
+ }else ln+='<span>Première fois sur cet exercice</span>';
+ if(kg)ln+='<span>1RM estimé ≈ <b>'+fmt(bv)+' kg</b></span>';
+ if(ci>=0)ln+='<span class="rec">'+crownHTML(14)+'Record</span>';
+ return h+'<div class="edl">'+ln+'</div>';
+}
 function todayView(){
  var now=new Date(),di=dow(now),tds=iso(now),plan=planFor(tds),tpl=S.tpls.find(function(t){return t.id===plan});
  var h='<header class="hd"><div><p class="eyebrow">'+DAYS[di]+'</p><h1>'+now.getDate()+' '+MONTHS[now.getMonth()]+'</h1></div><span id="sync" class="sync '+ui.sync+'"><i></i>'+syncText()+'</span></header>';
  if(S.active){
   var a=S.active,n=countSets(a);
   h+='<section class="card"><p class="eyebrow">Séance en cours</p><h2>'+esc(a.name)+'</h2><p class="mute small" style="margin:0">'+n.done+' série'+(n.done>1?'s':'')+' cochée'+(n.done>1?'s':'')+' · démarrée à '+new Date(a.startedAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</p><button class="btn" data-act="resume">Reprendre</button></section>';
+ }else if(!SESS.length){
+  h+='<section class="welcome"><span class="ec-i big">'+svg('dumb',34)+'</span><h2>Bienvenue</h2><p>Ton carnet est prêt. Lance une première séance, le reste se range tout seul.</p><ol class="wsteps"><li><b>1</b><span><strong>Choisis une séance</strong> du programme, ou démarre une séance vide.</span></li><li><b>2</b><span><strong>Coche tes séries</strong> : le repos se lance tout seul.</span></li><li><b>3</b><span><strong>Suis tes progrès</strong> : records, courbes, séries par muscle.</span></li></ol><button class="btn" data-act="openStart">Démarrer ma première séance</button><button class="btn line" data-act="tab" data-t="set">Importer mon historique FitNotes</button></section>';
  }else if(tpl){
   h+='<section class="card"><div><p class="eyebrow">Prévu aujourd\'hui</p><h2>'+dotHTML(tpl.color)+' '+esc(tpl.name)+'</h2>'+(tpl.focus?'<p class="mute small" style="margin:4px 0 0">'+esc(tpl.focus)+'</p>':'')+'</div><div>'+tpl.items.map(planLine).join('')+'</div><button class="btn" data-act="start" data-id="'+tpl.id+'" data-today="1">Démarrer la séance</button></section>';
  }else{
@@ -812,7 +911,7 @@ function todayView(){
   for(var k=1;k<=14&&!nt;k++){var dd=new Date(now.getFullYear(),now.getMonth(),now.getDate()+k),pid=planFor(iso(dd));if(pid){nt=S.tpls.find(function(t){return t.id===pid});nd=dd}}
   h+='<section class="card cmp"><div><p class="eyebrow">Repos aujourd\'hui</p><p class="cmp-t">'+(nt?'Prochaine : '+DAYS[dow(nd)].toLowerCase().slice(0,3)+'. · '+esc(nt.name):'Pas de séance prévue')+'</p></div><button class="btn soft s" data-act="openStart">Séance libre</button></section>';
  }
- if(S.active||tpl){h+='<div style="height:10px"></div><button class="btn line" data-act="openStart"'+(S.active?' disabled style="opacity:.5"':'')+'>Choisir une autre séance</button>'}
+ if(S.active||(tpl&&SESS.length)){h+='<div style="height:10px"></div><button class="btn line" data-act="openStart"'+(S.active?' disabled style="opacity:.5"':'')+'>Choisir une autre séance</button>'}
  var off=ui.wk||0,mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-di+off*7),cells='';
  for(var i=0;i<7;i++){
   var d=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+i),ds=iso(d),p=planFor(ds),t=S.tpls.find(function(x){return x.id===p});
@@ -822,6 +921,7 @@ function todayView(){
  var wk=SESS.filter(function(s){return s.date>=iso(mon)&&s.date<=iso(sun)}).length;
  var wtitle=off===0?'Cette semaine':off===-1?'Semaine dernière':off===1?'Semaine prochaine':'Semaine du '+mon.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
  h+='<div class="shd"><h2>'+wtitle+'</h2><div class="gnav">'+(off?'<button class="pill" data-act="wkNow">Aujourd\'hui</button>':'<span class="mute small">'+wk+' séance'+(wk>1?'s':'')+'</span>')+'<button class="ibtn sm" data-act="wkPrev" aria-label="Semaine précédente">'+svg('back',20)+'</button><button class="ibtn sm" data-act="wkNext" aria-label="Semaine suivante">'+svg('chev',20)+'</button></div></div><div class="week">'+cells+'</div>';
+ h+=muFresh();
  h+=S.set.cal?'<div class="shd"><h2>Calendrier</h2><button class="pill" data-act="calToggle" aria-expanded="true">Masquer</button></div>'+calHTML():calSum();
  h+=bwHome(now,tds);
  return h;
@@ -842,7 +942,7 @@ function bwHome(now,tds){
 function muView(h){
  var P=ui.mp||'w';
  h+='<div class="seg" style="margin:12px 0 0">'+[['w','1 semaine'],['m','1 mois'],['y','1 an'],['a','Tout']].map(function(m){return '<button data-act="mper" data-v="'+m[0]+'" aria-pressed="'+(P===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
- if(!SESS.length)return h+'<div class="empty" style="margin-top:12px"><h2>Pas encore de stats</h2><p>Les séries par muscle se calculent à partir de tes séances enregistrées. Termine ta première séance, ou importe ton historique depuis Réglages.</p></div>';
+ if(!SESS.length)return h+emptyHTML('chart','Pas encore de stats','Les séries par muscle se calculent à partir de tes séances enregistrées. Termine ta première séance, ou importe ton historique depuis Réglages.','',0,'margin-top:12px');
  var off=P==='a'?0:(ui.mw||0),w=muPer(P,off),pw=P==='a'?null:muPer(P,off-1),keys=Object.keys(MUS);
  function av(per,k){return per.r[k].n/per.weeks}
  var rows=keys.filter(function(k){return k!=='autre'||w.r[k].n>0}).sort(function(a,b){return av(w,b)-av(w,a)||keys.indexOf(a)-keys.indexOf(b)});
@@ -864,9 +964,9 @@ function muView(h){
 }
 function bwView(h){
  h+='<div class="seg" style="margin:12px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(m){return '<button data-act="bwr" data-v="'+m[0]+'" aria-pressed="'+((ui.bwr||'all')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'
- if(!S.bw.length)return h+'<div class="empty"><h2>Pas encore de pesée</h2><p>Saisis ton poids depuis l\'accueil, sous le calendrier : touche un jour de la ligne « Poids ».</p></div>';
+ if(!S.bw.length)return h+emptyHTML('set','Pas encore de pesée','Saisis ton poids depuis l\'accueil, sous le calendrier : touche un jour de la ligne « Poids ».');
  var pts=bwSeries(ui.bwr||'all');
- if(!pts.length)return h+'<div class="empty"><p>Aucune pesée sur cette période.</p></div>';
+ if(!pts.length)return h+emptyHTML('chart','','Aucune pesée sur cette période.','',1);
  if(ui.bsel==null||ui.bsel>=pts.length)ui.bsel=pts.length-1;
  var p=pts[ui.bsel],first=pts[0],last=pts[pts.length-1];
  function sg(v){return (v>0?'+':'')+fmt(v)}
@@ -885,7 +985,7 @@ function dayView(){
   h+='<div class="list">';
   done.forEach(function(x){var st=sstats(x);h+='<button class="item" data-act="sessOpen" data-from="day" data-id="'+x.id+'"><div class="main"><b>'+dotHTML(tcol(x.tplId))+' '+esc(x.name)+'</b><span>'+x.items.length+' exercices · '+st.sets+' séries'+(x.dur?' · '+x.dur+' min':'')+'</span></div>'+svg('chev',20)+'</button>'});
   h+='</div>';
- }else h+='<div class="empty"><p>Aucune séance enregistrée ce jour.</p></div>';
+ }else h+=emptyHTML('today','','Aucune séance enregistrée ce jour.','',1);
  if(ds>=tds){
   var pid=planFor(ds),pt=S.tpls.find(function(t){return t.id===pid}),ov=S.plan&&Object.prototype.hasOwnProperty.call(S.plan,ds),wkT=S.tpls.find(function(t){return t.id===S.sched[dow(d)]});
   h+='<div class="shd"><h2>Prévu</h2></div><div class="card"><div><h2>'+(pt?dotHTML(pt.color)+' '+esc(pt.name):'Repos')+'</h2>'+(pt&&pt.focus?'<p class="mute small" style="margin:4px 0 0">'+esc(pt.focus)+'</p>':'')+'</div>';
@@ -1016,14 +1116,14 @@ function progressView(){
  var cnt={};SESS.forEach(function(s){var seen={};s.items.forEach(function(it){if(!seen[it.ex]){seen[it.ex]=1;cnt[it.ex]=(cnt[it.ex]||0)+1}})});
  var exs=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]});
  if(!exs.length){
-  return h+'<div class="empty"><h2>Pas encore de courbe</h2><p>La courbe se dessine à partir de tes séances enregistrées, une valeur par séance et par exercice. Termine ta première séance, ou ajoute-en une passée depuis l\'historique.</p><button class="btn" data-act="openStart">Ajouter une séance</button></div>';
+  return h+emptyHTML('chart','Pas encore de courbe','La courbe se dessine à partir de tes séances enregistrées, une valeur par séance et par exercice. Termine ta première séance, ou ajoute-en une passée depuis l\'accueil.','<button class="btn" data-act="openStart">Ajouter une séance</button>');
  }
  if(!ui.px||!cnt[ui.px])ui.px=exs[0];
- h+='<div class="fld"><label>Exercice</label><button class="expb" data-act="exOpen" aria-haspopup="dialog">'+mdot(ui.px)+'<span>'+esc(exName(ui.px))+'</span><small>'+MUS[musOf(ui.px)].n+'</small>'+svg('chev',18)+'</button></div>';
+ h+='<div class="fld"><label>Exercice</label><button class="expb" data-act="exOpen" aria-haspopup="dialog">'+mdot(ui.px)+'<span>'+esc(exName(ui.px))+'</span><small>'+MUS[musOf(ui.px)].n+'</small>'+svg('chev',18)+'</button></div>'+platHTML(ui.px);
  h+='<div class="seg" style="margin-top:12px">'+[['e1rm','1RM estimé'],['kg','Charge max'],['vol','Volume']].map(function(m){return '<button data-act="pm" data-v="'+m[0]+'" aria-pressed="'+(ui.pm===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
  h+='<div class="seg" style="margin:8px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(m){return '<button data-act="pr" data-v="'+m[0]+'" aria-pressed="'+(ui.pr===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'
  var pts=series(ui.px,ui.pm,ui.pr);
- if(!pts.length)return h+'<div class="empty"><p>Aucune donnée sur cette période pour cet exercice.</p></div>';
+ if(!pts.length)return h+emptyHTML('chart','','Aucune donnée sur cette période pour cet exercice.','',1);
  if(ui.sel==null||ui.sel>=pts.length)ui.sel=pts.length-1;
  var p=pts[ui.sel],unit=ui.pm==='e1rm'?' kg':ui.pm==='kg'?' kg':' kg';
  h+='<div class="cardc"><div class="read"><div><span>'+dlabelY(p.ds)+' · '+esc(p.name)+'</span><br><b class="num">'+fmt(p.v)+unit+'</b></div><span class="num">meilleure série<br>'+p.best+'</span></div>'+chartSVG(pts,ui.sel)+'</div>';
@@ -1065,7 +1165,7 @@ function loggerView(){
  var nextSet=false;
  c.items.forEach(function(it,i){
   var prev=prevSets(it.ex,c.id);
-  h+='<section class="ex"><div class="ex-h"><div><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.target?'<p>Objectif '+esc(it.target)+'</p>':'')+(it.sug?'<p class="sug">↑ +'+fmt(it.sug.inc)+' kg · '+it.sug.hi+' reps atteintes partout la dernière fois</p>':'')+exChip(it.ex)+'</div><div class="tools"><button class="ibtn" data-act="exNote" data-i="'+i+'" aria-label="Note">'+svg('note',20)+'</button><button class="ibtn" data-act="exUp" data-i="'+i+'" aria-label="Monter">'+svg('up',20)+'</button><button class="ibtn" data-act="exDown" data-i="'+i+'" aria-label="Descendre">'+svg('down',20)+'</button><button class="ibtn bad" data-act="exDel" data-i="'+i+'" aria-label="Retirer l\'exercice">'+svg('x',20)+'</button></div></div>';
+  h+='<section class="ex"><div class="ex-h"><div><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.target?'<p>Objectif '+esc(it.target)+'</p>':'')+(it.sug?'<p class="sug">↑ +'+fmt(it.sug.inc)+' kg · '+it.sug.hi+' reps atteintes partout la dernière fois</p>':'')+exChip(it.ex)+'</div><div class="tools"><button class="ibtn" data-act="exNote" data-i="'+i+'" aria-label="Note">'+svg('note',20)+'</button><button class="ibtn" data-act="exUp" data-i="'+i+'" aria-label="Monter">'+svg('up',20)+'</button><button class="ibtn" data-act="exDown" data-i="'+i+'" aria-label="Descendre">'+svg('down',20)+'</button><button class="ibtn bad" data-act="exDel" data-i="'+i+'" aria-label="Retirer l\'exercice">'+svg('x',20)+'</button></div></div>'+platHTML(it.ex);
   if(it.noteOpen||it.note)h+='<div class="note"><input class="in t" id="n-'+it.id+'" data-f="note" data-i="'+i+'" placeholder="Note (réglage machine, sensation…)" value="'+esc(it.note)+'"></div>';
   h+='<div class="srow head"><span>#</span><span>Préc.</span><span>kg</span><span>reps</span><span>'+svg('check',16)+'</span></div>';
   var kk=0,ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
@@ -1105,7 +1205,7 @@ function sessView(){
  h+='<div class="stats" style="margin:0 0 16px"><div><span>Exercices</span><b class="num">'+s.items.length+'</b></div><div><span>Séries</span><b class="num">'+st.sets+'</b></div><div><span>Volume</span><b class="num">'+Math.round(st.vol).toLocaleString('fr-FR')+'</b></div></div>';
  h+='<div class="sum-l" style="margin:-4px 0 16px"><b class="num">≈ '+kcalSess(s)+'</b><span>kcal brûlées (estimation'+(bwAt(s.date)?'':' · poids par défaut 75 kg')+')</span></div>';
  s.items.forEach(function(it){
-  h+='<section class="ex"><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.note?'<p class="mute small" style="margin:4px 0 0">'+esc(it.note)+'</p>':'')+'<div style="margin-top:6px">'+(function(){var k=0,ci=crownIdx(it.sets,prevBestE1(it.ex,s),false);return it.sets.map(function(x,j){if(isNorm(x))k++;return '<div class="xl"><span class="t mute">'+setLabel(x,k)+'</span><span class="v num">'+fmt(x.kg)+' kg × '+x.reps+(j===ci?crownHTML(20):'')+'</span></div>'}).join('')})()+'</div></section>';
+  h+='<section class="ex"><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.note?'<p class="mute small" style="margin:4px 0 0">'+esc(it.note)+'</p>':'')+exSum(s,it)+'<div style="margin-top:6px">'+(function(){var k=0,ci=crownIdx(it.sets,prevBestE1(it.ex,s),false);return it.sets.map(function(x,j){if(isNorm(x))k++;return '<div class="xl"><span class="t mute">'+setLabel(x,k)+'</span><span class="v num">'+fmt(x.kg)+' kg × '+x.reps+(j===ci?crownHTML(20):'')+'</span></div>'}).join('')})()+'</div></section>';
  });
  h+='<div class="list" style="margin-top:6px"><button class="btn" data-act="sessRedo" data-id="'+s.id+'">Refaire cette séance</button><button class="btn soft" data-act="sessEdit" data-id="'+s.id+'">Modifier</button><button class="btn danger" data-act="sessDelAsk" data-id="'+s.id+'">Supprimer</button></div></div></div>';
  return h;

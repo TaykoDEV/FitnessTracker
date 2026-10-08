@@ -64,7 +64,8 @@ input,select{font:inherit;color:inherit}
 
 /* headings */
 .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:8px 0 16px;position:relative}
-.hd.hp #sync{font-size:0;gap:0;margin-right:88px}
+.hd.hp #sync{display:none}
+html[data-ro]::after{content:'';position:fixed;inset:0;z-index:99999;pointer-events:none;background:var(--acc);opacity:.06}
 .prof{position:absolute;right:0;top:6px;display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--surf2);box-shadow:inset 0 0 0 1px var(--bd);color:var(--mute)}
 .prof::after{content:'';position:absolute;inset:-6px}
 .prof i{position:relative;z-index:1;font:700 16px/1 var(--head,'Barlow Condensed',sans-serif);font-style:normal;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;transition:color .3s}
@@ -363,6 +364,7 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
  .nav button:active .ni{transform:scale(.9)}
  .nav .ni{transition:transform .14s cubic-bezier(.2,.8,.2,1),background-color .2s}
  .nav{view-transition-name:nav}
+ html[data-vt=circ] .nav{view-transition-name:none}
  ::view-transition{pointer-events:none}
  ::view-transition-old(root),::view-transition-new(root){mix-blend-mode:normal;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
  html[data-vt] ::view-transition-old(root){animation:vtout .13s ease-in both}
@@ -586,7 +588,7 @@ sortSess();
 
 /* ---------- persistence ---------- */
 var tLocal=0,tRemote=0,pendingCfg=false;
-function saveLocal(){if(ui.ro)return;try{localStorage.setItem(LS,JSON.stringify({S:S,SESS:SESS}))}catch(e){}}
+function saveLocal(){try{var d=ui.ro&&OWN?{S:OWN.S,SESS:OWN.SESS}:{S:S,SESS:SESS};localStorage.setItem(LS,JSON.stringify(d))}catch(e){}}
 function setSync(v){ui.sync=v;var el=document.getElementById('sync');if(el){el.className='sync '+v;el.innerHTML='<i></i>'+syncText()}}
 function syncText(){return ui.sync==='ok'?'Synchronisé':ui.sync==='err'?'Hors ligne':'Sur cet appareil'}
 function dirtyCfg(){S.upd=Date.now();pendingCfg=true;clearTimeout(tLocal);tLocal=setTimeout(saveLocal,250);clearTimeout(tRemote);tRemote=setTimeout(pushCfg,1500)}
@@ -1008,7 +1010,14 @@ function delSetAt(i,j,sw){
  return true;
 }
 function emptyHTML(ic,title,text,btns,sm,style){return '<div class="empty ec'+(sm?' sm':'')+'"'+(style?' style="'+style+'"':'')+'><span class="ec-i">'+svg(ic,sm?22:26)+'</span>'+(title?'<h2>'+title+'</h2>':'')+'<p>'+text+'</p>'+(btns||'')+'</div>'}
+var mdC=[];
 function mDays(){
+ var u=0,i;for(i=0;i<SESS.length;i++){var q=SESS[i].upd||0;if(q>u)u=q}
+ var key=SESS.length+'|'+u+'|'+S.upd+'|'+todayISO();
+ for(i=0;i<mdC.length;i++)if(mdC[i].ss===SESS&&mdC[i].lib===S.lib&&mdC[i].key===key)return mdC[i].v;
+ var v=mDaysRaw();mdC.unshift({ss:SESS,lib:S.lib,key:key,v:v});if(mdC.length>3)mdC.length=3;return v;
+}
+function mDaysRaw(){
  var last={},t0=pd(todayISO()).getTime();
  SESS.forEach(function(x){
   var dd=Math.round((t0-pd(x.date).getTime())/864e5);if(dd<0)return;
@@ -2055,7 +2064,7 @@ syncText=function(){if(gOn()){if(gBusy)return 'Sauvegarde…';if(gErr)return 'Dr
 var _saveLocal=saveLocal;
 saveLocal=function(){_saveLocal();gNeed=true};
 var _commit=commit;
-function gCool(){return !!(gSt.fail&&Date.now()-gSt.fail<6048e5)}
+function gCool(){return !!(gSt.fail&&Date.now()-gSt.fail<864e5)}
 try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='set'&&ui.route.name==='main')render()})}catch(e){}
 
 function gLoad(cb){
@@ -2130,7 +2139,7 @@ function gPull(){
 function gBoot(){
  if(!gOn()||gBusy||gSt.hold||gCool())return;
  if(ui.route.name==='logger'||ui.rest)return;
- if(Date.now()-(gSt.last||0)>=6048e5)gRun(false);
+ if(Date.now()-(gSt.last||0)>=864e5)gRun(false);
 }
 setTimeout(gBoot,1500);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(gBoot,800)});
@@ -2138,7 +2147,7 @@ function gUI(){
  if(!GCID||GCID.indexOf('__')===0)return '';
  var pers='<p class="mute small" style="margin:8px 0 0">Stockage du téléphone protégé contre le nettoyage automatique : '+(gPers===1?'oui':gPers===0?'non (exporte régulièrement un fichier)':'inconnu')+'.</p>';
  if(!gOn())return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">Connecte ton compte Google une fois : l\'app sauvegarde ensuite toute seule dans un dossier caché de ton Drive. Rien n\'est partagé et l\'app ne voit pas le reste de ton Drive.</div></div><button class="btn" data-act="gConnect">Se connecter avec Google</button></div>'+pers;
- var st=gBusy?'Sauvegarde en cours…':gSt.hold?'⚠ Choix en attente : appuie sur « Sauvegarder maintenant ».':gErr?'⚠ '+gErr+'. Appuie sur « Sauvegarder maintenant » pour te reconnecter.':'Dernière sauvegarde : '+(gSt.last?gAgo(gSt.last):'aucune')+'. Automatique à l\'ouverture de l\'app, au plus une fois par semaine.';
+ var st=gBusy?'Sauvegarde en cours…':gSt.hold?'⚠ Choix en attente : appuie sur « Sauvegarder maintenant ».':gErr?'⚠ '+gErr+'. Appuie sur « Sauvegarder maintenant » pour te reconnecter.':'Dernière sauvegarde : '+(gSt.last?gAgo(gSt.last):'aucune')+'. Automatique à l\'ouverture de l\'app, au plus une fois par jour.';
  return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">'+st+'</div></div><div class="row2"><button class="btn soft" data-act="gNow">Sauvegarder maintenant</button><button class="btn soft" data-act="gPull">Restaurer</button></div><button class="btn line" data-act="gOff">Se déconnecter</button></div>'+pers;
 }
 
@@ -2220,7 +2229,7 @@ function shFetch(P){
   .then(function(j){if(!j||j.app!=='fitness-tracker-share'||!j.S||!Array.isArray(j.SESS))throw {error:'format'};return j});
 }
 function shMsg(e){var c=e&&e.error;return c==='offline'?'Hors ligne':c==='nokey'?'Clé API Google manquante (voir Réglages > Partage)':c==='format'?'Ce lien ne correspond pas à un profil':(c==='http404'||c==='http403')?'Lien invalide ou partage arrêté':'Impossible de charger le profil'}
-function shStore(P,j){shP={id:P.id,rk:P.rk,key:P.key||shKey(),name:(j.name||'').trim()||'Profil',acc:j.acc||null,at:j.at||0,fetched:Date.now(),data:{S:j.S,SESS:j.SESS}};shPSave()}
+function shStore(P,j){shPrep=null;shStat={};shP={id:P.id,rk:P.rk,key:P.key||shKey(),name:(j.name||'').trim()||'Profil',acc:j.acc||null,at:j.at||0,fetched:Date.now(),data:{S:j.S,SESS:j.SESS}};shPSave();setTimeout(shPrepare,80)}
 function shLinkDo(text){
  var P=shParse(text);if(!P){toast('Lien non reconnu');return Promise.resolve()}
  if(shSt.id&&P.id===shSt.id){toast('C\'est ton propre lien');return Promise.resolve()}
@@ -2230,7 +2239,7 @@ function shLinkDo(text){
 function shRefreshP(manual){
  if(!shP||shP.demo||shLoading)return Promise.resolve();
  shLoading=true;
- return shFetch(shP).then(function(j){shLoading=false;shStore(shP,j);if(ui.ro){roLoad();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;if(manual)toast(shMsg(e))});
+ return shFetch(shP).then(function(j){shLoading=false;if(j.at&&j.at===shP.at){shP.fetched=Date.now();if(manual)toast('Profil à jour');return}shStore(shP,j);if(ui.ro){roLoad();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;if(manual)toast(shMsg(e))});
 }
 
 /* --- bascule de profil --- */
@@ -2243,20 +2252,31 @@ function peerAcc(){
  return 'bleu';
 }
 function accHex(k){return ACC[k][isDarkNow()?'d':'l'][0]}
+var shPrep=null,shStat={};
+function cmpSess(a,b){return a.date<b.date?1:a.date>b.date?-1:(b.start||0)-(a.start||0)}
+function shPrepare(){
+ if(!shP||!shP.data){shPrep=null;return}
+ if(shPrep&&shPrep.src===shP.data)return;
+ var s2=normalize(JSON.parse(JSON.stringify(shP.data.S)));s2.active=null;s2.bw=[];
+ var ss=JSON.parse(JSON.stringify(shP.data.SESS||[]));ss.sort(cmpSess);
+ shPrep={src:shP.data,S:s2,SESS:ss};shStat={};
+ var sv=S,sg=SESS;S=s2;SESS=ss;try{mDays()}catch(e){}S=sv;SESS=sg;
+}
 function roLoad(){
- var ps=normalize(JSON.parse(JSON.stringify(shP.data.S)));ps.active=null;ps.bw=[];
- ps.set=JSON.parse(JSON.stringify(OWN.S.set));ps.set.acc=peerAcc();
- S=ps;SESS=JSON.parse(JSON.stringify(shP.data.SESS||[]));sortSess();
+ shPrepare();
+ var ps=shPrep.S;ps.set=JSON.parse(JSON.stringify(OWN.S.set));ps.set.acc=peerAcc();
+ S=ps;SESS=shPrep.SESS;
 }
 function roReset(){ui.route={name:'main'};ui.sheet=null;ui.modal=null;ui.px=null;ui.sel=null;ui.bsel=null;ui.vsel=null;ui.muo=null;if(ui.pv==='bw')ui.pv='ex'}
 function roEnter(){
  if(!shP||!shP.data||ui.ro)return;
- saveLocal();OWN={S:S,SESS:SESS};ui.ro={name:shP.name};roLoad();roReset();
+ OWN={S:S,SESS:SESS};ui.ro={name:shP.name};roLoad();roReset();
  if(ui.tab==='prog'||ui.tab==='set')ui.tab='today';
 }
 function roExit(){if(!OWN)return;S=OWN.S;SESS=OWN.SESS;OWN=null;ui.ro=null;roReset()}
 var profPrev=null;
 function profInject(){
+ var de=document.documentElement;if(ui.ro)de.setAttribute('data-ro','1');else de.removeAttribute('data-ro');
  if(!shP||ui.route.name!=='main')return;
  var hd=app.querySelector('.scroll .hd');if(!hd)return;
  var me=(OWN?OWN.S:S).set.name||'Moi',other=shP.name||'?',on=!!ui.ro;
@@ -2289,7 +2309,7 @@ A.profSw=function(){
  hap(10);
  var go=function(){if(back)roExit();else roEnter();render();profStagger()};
  if(profCircle(go,back)===false){ui.anim=back?'prev':'next';ui.animSel='.scroll';go()}
- if(!back&&Date.now()-(shP.fetched||0)>120000)shRefreshP(false);
+ if(!back&&Date.now()-(shP.fetched||0)>120000)setTimeout(function(){shRefreshP(false)},1500);
 };
 A.shRefresh=function(){shRefreshP(true)};
 /* prototype : faux profil lié pour tester la bascule sans second téléphone */
@@ -2298,7 +2318,7 @@ A.shDemo=function(){
  ss.forEach(function(x){x.items.forEach(function(it){it.sets.forEach(function(q){q.kg=Math.round(q.kg*0.75*2)/2})})});
  s.active=null;s.bw=[];s.set={};
  shP={id:'demo',rk:'',key:'',demo:true,name:'Démo',acc:null,at:Date.now(),fetched:Date.now(),data:{S:s,SESS:ss}};
- shPSave();profPrev=null;render();toast('Profil démo activé : bouton en haut à droite');
+ shPrep=null;shStat={};shPSave();profPrev=null;render();toast('Profil démo activé : bouton en haut à droite');
 };
 
 /* --- réglages --- */
@@ -2330,7 +2350,7 @@ A.shLink=function(){var el=document.getElementById('shin');shLinkDo(el?el.value:
 A.shLinkOk=function(){var c=ui.shIn;ui.shIn=null;ui.modal=null;render();if(c)shLinkDo(shUrlFrom(c))};
 function shUrlFrom(c){return c.id+'.'+(c.rk||'0')+'.'+(c.key||'0')}
 A.shUnlink=function(){ui.modal={title:'Délier ce profil ?',text:'Tu ne verras plus les données de '+(shP?shP.name:'')+'. Elle pourra te renvoyer son lien plus tard.',btns:[{act:'shUnlinkOk',label:'Délier',danger:true},{act:'closeModal',label:'Annuler',line:true}]};render()};
-A.shUnlinkOk=function(){ui.modal=null;if(ui.ro)roExit();shP=null;shPSave();render();toast('Profil délié')};
+A.shUnlinkOk=function(){ui.modal=null;if(ui.ro)roExit();shP=null;shPrep=null;shStat={};shPSave();render();toast('Profil délié')};
 ROK.shLinkOk=1;ROK.closeModal=1;
 function shSec(){return shAvail()?'<div class="shd"><h2>Partage entre deux profils</h2></div>'+shUI():''}
 function shUI(){
@@ -2370,10 +2390,15 @@ function wkStats(D){
  }finally{S=sv;SESS=ss}
  return r;
 }
+function sessSig(ss){var u=0;for(var i=0;i<ss.length;i++)if((ss[i].upd||0)>u)u=ss[i].upd;return ss.length+'|'+u+'|'+todayISO()}
+var shOwnStat=null;
 function recapHTML(){
  if(!shP||!shP.data)return '';
  var me=(S.set.name||'').trim()||'Moi',ot=shP.name||'Profil';
- var a=wkStats({S:S,SESS:SESS}),b=wkStats({S:normalize(JSON.parse(JSON.stringify(shP.data.S))),SESS:shP.data.SESS||[]});
+ shPrepare();
+ var sg=sessSig(SESS)+'|'+(S.set.name||'');if(!shOwnStat||shOwnStat.sg!==sg)shOwnStat={sg:sg,v:wkStats({S:S,SESS:SESS})};
+ var pg=todayISO();if(!shStat.v||shStat.d!==pg)shStat={d:pg,v:wkStats({S:shPrep.S,SESS:shPrep.SESS})};
+ var a=shOwnStat.v,b=shStat.v;
  function row(l,x,y,f,crown){
   var wa=x>y,wb=y>x;
   return '<span class="rl">'+l+'</span><span class="rv num'+(wa?' win':'')+'">'+f(x)+(crown&&x>0?crownHTML(14):'')+'</span><span class="rv num'+(wb?' win':'')+'">'+f(y)+(crown&&y>0?crownHTML(14):'')+'</span>';
@@ -2389,6 +2414,7 @@ function recapHTML(){
   +row('Records',a.rec,b.rec,function(v){return v},true)
   +'</div>'+msg.join('')+'<p class="rc-s">Données de '+esc(ot)+' : '+(shP.fetched?gAgo(shP.fetched):'jamais')+'</p></section>';
 }
+setTimeout(shPrepare,700);
 setTimeout(function(){if(shP&&!shP.demo&&navigator.onLine!==false&&Date.now()-(shP.fetched||0)>600000)shRefreshP(false)},1800);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&shP&&!shP.demo&&Date.now()-(shP.fetched||0)>600000)setTimeout(function(){shRefreshP(false)},1500)});
 

@@ -645,6 +645,7 @@ function programView(){
  h+='<div class="card" style="margin-top:10px"><div><b>Vibration</b><div class="mute small">À la fin du temps de repos</div></div><div class="seg"><button data-act="setOpt" data-k="vib" data-v="1" aria-pressed="'+(S.set.vib!==false)+'">Oui</button><button data-act="setOpt" data-k="vib" data-v="0" aria-pressed="'+(S.set.vib===false)+'">Non</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Sens du balayage</b><div class="mute small">Pour changer d\'onglet ou de jour</div></div><div class="seg"><button data-act="flip" data-v="0" aria-pressed="'+(!S.set.flip)+'">Gauche = suivant</button><button data-act="flip" data-v="1" aria-pressed="'+(!!S.set.flip)+'">Droite = suivant</button></div></div>';
  h+='<div class="shd"><h2>Sauvegarde</h2></div><div class="card"><p class="mute small" style="margin:0">Tes données restent sur ce téléphone. Exporte un fichier de temps en temps pour ne rien perdre, ou pour changer de téléphone.</p><div class="row2"><button class="btn soft" data-act="exportData">Exporter</button><label class="btn soft" for="imp" style="cursor:pointer">Importer</label></div><input type="file" id="imp" accept="application/json,.json" data-f="imp" hidden></div>';
+ h+=gUI();
  return h;
 }
 
@@ -854,11 +855,16 @@ function modalHTML(){
 /* ---------- bouton retour du téléphone ---------- */
 var hd=0,skipPop=0;
 function depth(){return (ui.tab!=='today'?1:0)+(ui.route.name!=='main'?1:0)+(ui.sheet?1:0)+(ui.modal?1:0)}
+var histDirty=false,histT=0;
 function syncHist(){
  try{
+  if(skipPop>0){histDirty=true;return}
   var d=depth();
   if(d>hd){for(var i=hd+1;i<=d;i++)history.pushState({d:i},'');hd=d}
-  else if(d<hd){skipPop++;var n=d-hd;hd=d;history.go(n)}
+  else if(d<hd){
+   skipPop++;var n=d-hd;hd=d;history.go(n);
+   clearTimeout(histT);histT=setTimeout(function(){if(skipPop>0){skipPop=0;histDirty=false;syncHist()}},500);
+  }
  }catch(e){}
 }
 try{history.replaceState({d:0},'')}catch(e){}
@@ -872,7 +878,7 @@ function goUp(){
  if(ui.tab!=='today'){ui.tab='today';ui.sel=null}
 }
 window.addEventListener('popstate',function(e){
- if(skipPop>0){skipPop--;return}
+ if(skipPop>0){skipPop--;if(skipPop===0&&histDirty){histDirty=false;clearTimeout(histT);syncHist()}return}
  hd=(e.state&&e.state.d)||0;
  goUp();render();
 });
@@ -1048,6 +1054,12 @@ var A={
   if(used&&S.lib[id])S.lib[id].hidden=true;else delete S.lib[id];
   dirtyCfg();ui.modal=null;render();toast('Exercice supprimé');
  },
+ gConnect:function(){gRun(true)},
+ gNow:function(){gSt.hold=false;gRun(true)},
+ gPull:function(){gPull()},
+ gOff:function(){try{if(gTok&&window.google)google.accounts.oauth2.revoke(gTok)}catch(e){}gTok=null;gSt={};try{localStorage.removeItem(GK)}catch(e){}ui.sync='local';setSync('local');render();toast('Déconnecté : les sauvegardes déjà sur Drive restent')},
+ gRestore:function(){var p=ui.gpend;if(!p)return;S=normalize(p.r.S);S.upd=Date.now();SESS=p.r.SESS||[];sortSess();saveLocal();gSt.mod=p.f.modifiedTime;gSt.last=Date.now();gSt.hold=false;gSave();gNeed=false;ui.gpend=null;ui.modal=null;ui.cur=null;ui.curKind=null;ui.rest=null;ui.route={name:'main'};gErr='';ui.sync='ok';render();toast('Données restaurées depuis Drive')},
+ gOverwrite:function(){var p=ui.gpend;if(!p)return;ui.modal=null;ui.gpend=null;gBusy=true;gRefresh();gToken('none').then(function(){return gWrite(p.f.id,gPayload())}).then(function(j){gDone(j);toast('Drive mis à jour')}).catch(function(){gBusy=false;gErr='à reconnecter';gRefresh()})},
  exportData:function(){
   var blob=new Blob([JSON.stringify({app:'fitness-tracker',v:1,S:S,SESS:SESS})],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fitness-tracker-'+todayISO()+'.json';
@@ -1143,6 +1155,109 @@ app.addEventListener('focusin',function(e){var t=e.target;if(t.matches&&t.matche
 app.addEventListener('mouseup',function(e){var t=e.target;if(t.matches&&t.matches(SELQ)&&document.activeElement===t&&t.selectionStart===t.selectionEnd&&t.__fresh){e.preventDefault()}});
 app.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.f;if(f&&I[f])I[f](e.target)});
 app.addEventListener('change',function(e){var f=e.target.dataset&&e.target.dataset.f;if(f&&C[f])C[f](e.target)});
+
+/* ---------- sauvegarde Google Drive (dossier caché de l'app) ---------- */
+var GCID='758884703149-6rpnm1smstbv81lc202gqam8or7u349h.apps.googleusercontent.com',GK='ft.gdrive',GFILE='fitness-tracker-backup.json';
+var gSt=(function(){try{return JSON.parse(localStorage.getItem(GK)||'{}')||{}}catch(e){return {}}})();
+var gTok=null,gExp=0,gBusy=false,gNeed=false,gClient=null,gErr='',gCb=null,gEb=null,gPers=null;
+function gSave(){try{localStorage.setItem(GK,JSON.stringify(gSt))}catch(e){}}
+function gOn(){return !!(gSt.on&&GCID&&GCID.indexOf('__')!==0)}
+function gAgo(t){var m=Math.round((Date.now()-t)/60000);if(m<1)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';return 'il y a '+Math.round(h/24)+' j'}
+function gRefresh(){
+ ui.sync=gOn()?(gErr?'err':'ok'):'local';
+ setSync(ui.sync);
+ if(ui.modal||(ui.route.name==='main'&&ui.tab==='prog'))render();
+}
+var _syncText=syncText;
+syncText=function(){if(gOn()){if(gBusy)return 'Sauvegarde…';if(gErr)return 'Drive : '+gErr;return 'Drive · '+(gSt.last?gAgo(gSt.last):'en attente')}return _syncText()};
+var _saveLocal=saveLocal;
+saveLocal=function(){_saveLocal();gNeed=true};
+var _commit=commit;
+commit=function(k){_commit(k);if(gOn()&&!gSt.hold)gRun(false)};
+try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='prog'&&ui.route.name==='main')render()})}catch(e){}
+
+function gLoad(cb){
+ if(window.google&&google.accounts&&google.accounts.oauth2)return cb(true);
+ var sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;
+ sc.onload=function(){cb(!!(window.google&&google.accounts&&google.accounts.oauth2))};sc.onerror=function(){cb(false)};
+ document.head.appendChild(sc);
+}
+function gToken(prompt){
+ return new Promise(function(res,rej){
+  if(gTok&&Date.now()<gExp-60000)return res(gTok);
+  gLoad(function(ok){
+   if(!ok)return rej({error:'offline'});
+   if(!gClient)gClient=google.accounts.oauth2.initTokenClient({client_id:GCID,scope:'https://www.googleapis.com/auth/drive.appdata',
+    callback:function(r){if(gCb)gCb(r)},error_callback:function(e){if(gEb)gEb(e)}});
+   gCb=function(r){if(r&&r.access_token){gTok=r.access_token;gExp=Date.now()+(r.expires_in||3600)*1000;res(gTok)}else rej(r||{error:'denied'})};
+   gEb=function(e){rej(e||{error:'popup'})};
+   try{gClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
+  });
+ });
+}
+function gApi(url,init){
+ init=init||{};init.headers=Object.assign({Authorization:'Bearer '+gTok},init.headers||{});
+ return fetch(url,init).then(function(r){if(r.status===401)gTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
+}
+function gFind(){
+ return gApi('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GFILE+"'")+'&fields=files(id,modifiedTime)')
+  .then(function(r){return r.json()}).then(function(j){return (j.files||[])[0]||null});
+}
+function gRead(id){return gApi('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media').then(function(r){return r.json()})}
+function gPayload(){return JSON.stringify({app:'fitness-tracker',v:1,at:Date.now(),S:S,SESS:SESS})}
+function gWrite(id,body){
+ if(id)return gApi('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media&fields=id,modifiedTime',{method:'PATCH',headers:{'Content-Type':'application/json'},body:body}).then(function(r){return r.json()});
+ var bd='ftb'+uid(),meta=JSON.stringify({name:GFILE,parents:['appDataFolder']});
+ return gApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+bd},
+  body:'--'+bd+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+bd+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+bd+'--'}).then(function(r){return r.json()});
+}
+function gDone(j){gSt.mod=j.modifiedTime;gSt.last=Date.now();gSt.hold=false;gSave();gNeed=false;gBusy=false;gErr='';gRefresh()}
+function gAsk(r,f,why){
+ var n=(r&&r.SESS&&r.SESS.length)||0;
+ gSt.hold=true;gSave();
+ if(ui.modal&&ui.modal.title==='Séance terminée'){ui.gwait=[r,f,why];gRefresh();return}
+ ui.gpend={r:r,f:f};
+ ui.modal={title:'Sauvegarde Drive trouvée',text:'Drive contient '+n+' séance'+(n>1?'s':'')+', enregistrée'+(n>1?'s':'')+' le '+new Date(f.modifiedTime).toLocaleDateString('fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'. Ce téléphone en contient '+SESS.length+'. '+(why==='manual'?'':'Choisis quelle version garder.'),
+  btns:[{act:'gRestore',label:'Restaurer depuis Drive'},{act:'gOverwrite',label:'Écraser Drive avec ce téléphone',soft:true},{act:'closeModal',label:'Annuler',line:true}]};
+ gRefresh();
+}
+var _closeM=A.closeModal;
+A.closeModal=function(){_closeM();if(ui.gwait){var w=ui.gwait;ui.gwait=null;gAsk(w[0],w[1],w[2])}};
+function gRun(interactive){
+ if(gBusy||!GCID||GCID.indexOf('__')===0)return Promise.resolve();
+ gBusy=true;gErr='';gRefresh();
+ return gToken(interactive?'':'none').then(function(){
+  if(interactive){gSt.on=true;gSave()}
+  return gFind();
+ }).then(function(f){
+  if(f&&(!gSt.mod||f.modifiedTime!==gSt.mod)){
+   return gRead(f.id).then(function(r){gBusy=false;gAsk(r,f,'');return 'ask'});
+  }
+  return gWrite(f&&f.id,gPayload()).then(function(j){gDone(j);return 'ok'});
+ }).catch(function(e){
+  gBusy=false;gErr=e&&e.error==='offline'?'hors ligne':'à reconnecter';gRefresh();return 'err';
+ });
+}
+function gPull(){
+ if(gBusy)return;gBusy=true;gErr='';gRefresh();
+ gToken('').then(function(){gSt.on=true;gSave();return gFind()}).then(function(f){
+  gBusy=false;if(!f){gRefresh();toast('Aucune sauvegarde sur Drive');return}
+  return gRead(f.id).then(function(r){gAsk(r,f,'manual')});
+ }).catch(function(e){gBusy=false;gErr=e&&e.error==='offline'?'hors ligne':'à reconnecter';gRefresh()});
+}
+function gTap(){
+ if(!gOn()||gBusy||gSt.hold)return;
+ var age=Date.now()-(gSt.last||0);
+ if((gNeed&&age>1800000)||age>864e5)gRun(false);
+}
+app.addEventListener('click',gTap,true);
+function gUI(){
+ if(!GCID||GCID.indexOf('__')===0)return '';
+ var pers='<p class="mute small" style="margin:8px 0 0">Stockage du téléphone protégé contre le nettoyage automatique : '+(gPers===1?'oui':gPers===0?'non (exporte régulièrement un fichier)':'inconnu')+'.</p>';
+ if(!gOn())return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">Connecte ton compte Google une fois : l\'app sauvegarde ensuite toute seule dans un dossier caché de ton Drive. Rien n\'est partagé et l\'app ne voit pas le reste de ton Drive.</div></div><button class="btn" data-act="gConnect">Se connecter avec Google</button></div>'+pers;
+ var st=gBusy?'Sauvegarde en cours…':gSt.hold?'⚠ Choix en attente : appuie sur « Sauvegarder maintenant ».':gErr?'⚠ '+gErr+'. Appuie sur « Sauvegarder maintenant » pour te reconnecter.':'Dernière sauvegarde : '+(gSt.last?gAgo(gSt.last):'aucune')+'. Automatique après chaque séance.';
+ return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">'+st+'</div></div><div class="row2"><button class="btn soft" data-act="gNow">Sauvegarder maintenant</button><button class="btn soft" data-act="gPull">Restaurer</button></div><button class="btn line" data-act="gOff">Se déconnecter</button></div>'+pers;
+}
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 render();

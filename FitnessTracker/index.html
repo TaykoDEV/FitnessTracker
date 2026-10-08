@@ -313,6 +313,7 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
 'use strict';
 var DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 var DS=['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+function rangeLim(r){return r==='3m'?Date.now()-92*864e5:r==='6m'?Date.now()-183*864e5:r==='y'?new Date(new Date().getFullYear(),0,1).getTime():0}
 var MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 var LS='carnet-de-salle.v1';
 var app=document.getElementById('app');
@@ -502,8 +503,14 @@ function musOf(ex){var l=S.lib[ex]||{};return l.mus&&MUS[l.mus]?l.mus:guessMus(e
 function lvlOf(ex){var l=S.lib[ex]||{};return l.lvl>=1&&l.lvl<=3?l.lvl:MUS[musOf(ex)].l}
 function mus2Of(ex){var l=S.lib[ex]||{},m=musOf(ex);return Array.isArray(l.mus2)?l.mus2.filter(function(k){return MUS[k]&&k!==m}):[]}
 function exFreq(){var c={};SESS.forEach(function(s){var seen={};s.items.forEach(function(it){if(!seen[it.ex]){seen[it.ex]=1;c[it.ex]=(c[it.ex]||0)+1}})});return c}
-function muWeek(off){
- var d=pd(monOf(todayISO()));d.setDate(d.getDate()+off*7);var a=iso(d);d.setDate(d.getDate()+6);var b=iso(d);
+function dlm(x){return pd(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}
+function muPer(p,off){
+ var today=todayISO(),td=pd(today),a,b,lab;
+ if(p==='w'){var d=pd(monOf(today));d.setDate(d.getDate()+off*7);a=iso(d);d.setDate(d.getDate()+6);b=iso(d);lab=off===0?'Cette semaine':off===-1?'Semaine dernière':'Semaine du '+dlm(a)}
+ else if(p==='m'){var m=new Date(td.getFullYear(),td.getMonth()+off,1);a=iso(m);b=iso(new Date(m.getFullYear(),m.getMonth()+1,0));lab=MONTHS[m.getMonth()]+' '+m.getFullYear()}
+ else if(p==='y'){var y=td.getFullYear()+off;a=y+'-01-01';b=y+'-12-31';lab=String(y)}
+ else{a=SESS.length?SESS[SESS.length-1].date:today;b=today;lab='Depuis le début'}
+ var e=b>today?today:b,days=Math.max(1,Math.round((pd(e)-pd(a))/864e5)+1),weeks=p==='w'?1:Math.max(1,days/7);
  var r={},tot=0,ns=0;Object.keys(MUS).forEach(function(k){r[k]={n:0,ex:{}}});
  SESS.forEach(function(s){
   if(s.date<a||s.date>b)return;ns++;
@@ -514,7 +521,7 @@ function muWeek(off){
    mus2Of(it.ex).forEach(function(k){r[k].n+=n*.5;r[k].ex[it.ex]=(r[k].ex[it.ex]||0)+n*.5});
   });
  });
- return {a:a,b:b,r:r,tot:tot,ns:ns};
+ return {a:a,b:b,lab:lab,weeks:weeks,r:r,tot:tot,ns:ns};
 }
 function bwAt(ds){
  if(!S.bw.length)return null;
@@ -525,7 +532,7 @@ function kcalSet(ex,reps,bw){var l=S.lib[ex]||{};if(l.kcal>0)return l.kcal;retur
 function kcalSess(x){var bw=bwAt(x.date)||75,t=0;x.items.forEach(function(it){it.sets.forEach(function(st){if(st.t==='w')return;t+=kcalSet(it.ex,st.reps,bw)})});return Math.round(t)}
 function exKcalLine(k){var l=S.lib[k]||{},v=kcalSet(k,10,bwAt(todayISO())||75);return MUS[musOf(k)].n+' · '+LV[lvlOf(k)]+' · '+(l.kcal>0?'':'≈ ')+fmt(Math.round(v*10)/10)+' kcal/série'}
 function bwSeries(range){
- var lim=range==='3m'?Date.now()-92*864e5:range==='6m'?Date.now()-183*864e5:0;
+ var lim=rangeLim(range);
  return S.bw.filter(function(x){return pd(x.d).getTime()>=lim}).map(function(x){return {d:pd(x.d),ds:x.d,v:x.kg,best:'',name:'Pesée'}});
 }
 function prevBestE1(ex,c){var b=0;SESS.forEach(function(x){if(x.id===c.id||x.date>c.date)return;var v=bestE1(ex,x.items);if(v>b)b=v});return b}
@@ -758,29 +765,30 @@ function bwHome(now,tds){
  return h;
 }
 function muView(h){
+ var P=ui.mp||'w';
+ h+='<div class="seg" style="margin:12px 0 0">'+[['w','1 semaine'],['m','1 mois'],['y','1 an'],['a','Tout']].map(function(m){return '<button data-act="mper" data-v="'+m[0]+'" aria-pressed="'+(P===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
  if(!SESS.length)return h+'<div class="empty" style="margin-top:12px"><h2>Pas encore de stats</h2><p>Les séries par muscle se calculent à partir de tes séances enregistrées. Termine ta première séance, ou importe ton historique depuis Réglages.</p></div>';
- var off=ui.mw||0,w=muWeek(off),pw=muWeek(off-1),keys=Object.keys(MUS);
- var rows=keys.filter(function(k){return k!=='autre'||w.r[k].n>0}).sort(function(a,b){return w.r[b].n-w.r[a].n||keys.indexOf(a)-keys.indexOf(b)});
- var mx=20;rows.forEach(function(k){if(w.r[k].n>mx)mx=w.r[k].n});
- function dl(x){return pd(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}
- var tt=off===0?'Cette semaine':off===-1?'Semaine dernière':'Semaine du '+dl(w.a);
- h+='<div class="shd" style="margin-top:14px"><h2>'+tt+'</h2><div class="gnav">'+(off?'<button class="pill" data-act="muNow">Aujourd\'hui</button>':'')+'<button class="ibtn sm" data-act="muPrev" aria-label="Semaine précédente">'+svg('back',20)+'</button><button class="ibtn sm" data-act="muNext" aria-label="Semaine suivante"'+(off>=0?' disabled':'')+'>'+svg('chev',20)+'</button></div></div>';
- h+='<p class="mute small" style="margin:0">'+dl(w.a)+' – '+dl(w.b)+' · '+w.ns+' séance'+(w.ns>1?'s':'')+' · '+fmt(w.tot)+' série'+(w.tot>1?'s':'')+'</p>';
+ var off=P==='a'?0:(ui.mw||0),w=muPer(P,off),pw=P==='a'?null:muPer(P,off-1),keys=Object.keys(MUS);
+ function av(per,k){return per.r[k].n/per.weeks}
+ var rows=keys.filter(function(k){return k!=='autre'||w.r[k].n>0}).sort(function(a,b){return av(w,b)-av(w,a)||keys.indexOf(a)-keys.indexOf(b)});
+ var mx=20;rows.forEach(function(k){if(av(w,k)>mx)mx=av(w,k)});
+ var nav=P==='a'?'':'<div class="gnav">'+(off?'<button class="pill" data-act="muNow">Aujourd\'hui</button>':'')+'<button class="ibtn sm" data-act="muPrev" aria-label="Période précédente">'+svg('back',20)+'</button><button class="ibtn sm" data-act="muNext" aria-label="Période suivante"'+(off>=0?' disabled':'')+'>'+svg('chev',20)+'</button></div>';
+ h+='<div class="shd" style="margin-top:14px"><h2>'+w.lab+'</h2>'+nav+'</div>';
+ h+='<p class="mute small" style="margin:0">'+dlm(w.a)+(P==='y'||P==='a'?' '+pd(w.a).getFullYear():'')+' – '+dlm(w.b)+(P==='y'||P==='a'?' '+pd(w.b).getFullYear():'')+' · '+w.ns+' séance'+(w.ns>1?'s':'')+' · '+fmt(w.tot)+' série'+(w.tot>1?'s':'')+(P==='w'?'':' · moy. '+fmt(w.tot/w.weeks)+' / semaine')+'</p>';
  h+='<div class="mu-list">';
  rows.forEach(function(k){
-  var v=w.r[k].n,d=v-pw.r[k].n,op=ui.muo===k;
-  h+='<button class="mu-r'+(v?'':' z0')+'" data-act="muOpen" data-k="'+k+'" aria-expanded="'+op+'" aria-label="'+MUS[k].n+' : '+fmt(v)+' série'+(v>1?'s':'')+'"><span class="mu-n"><i class="mdot" style="background:'+mcol(k)+'"></i>'+MUS[k].n+'</span><span class="mu-bar" aria-hidden="true"><i class="mu-z" style="left:'+(10/mx*100).toFixed(2)+'%;width:'+(10/mx*100).toFixed(2)+'%"></i><i class="mu-f" style="background:'+mcol(k)+';width:'+(v/mx*100).toFixed(2)+'%"></i></span><b class="num">'+fmt(v)+'</b><span class="mu-d num '+(d>0?'up':d<0?'dn':'')+'">'+(pw.tot&&d?(d>0?'+':'−')+fmt(Math.abs(d)):'')+'</span></button>';
+  var v=av(w,k),d=pw?v-av(pw,k):0,op=ui.muo===k;
+  h+='<button class="mu-r'+(v?'':' z0')+'" data-act="muOpen" data-k="'+k+'" aria-expanded="'+op+'" aria-label="'+MUS[k].n+' : '+fmt(v)+' série'+(v>1?'s':'')+(P==='w'?'':' par semaine')+'"><span class="mu-n"><i class="mdot" style="background:'+mcol(k)+'"></i>'+MUS[k].n+'</span><span class="mu-bar" aria-hidden="true"><i class="mu-z" style="left:'+(10/mx*100).toFixed(2)+'%;width:'+(10/mx*100).toFixed(2)+'%"></i><i class="mu-f" style="background:'+mcol(k)+';width:'+(v/mx*100).toFixed(2)+'%"></i></span><b class="num">'+fmt(v)+'</b><span class="mu-d num '+(Math.abs(d)<.05?'':d>0?'up':'dn')+'">'+(pw&&pw.tot&&Math.abs(d)>=.05?(d>0?'+':'−')+fmt(Math.abs(d)):'')+'</span></button>';
   if(op){
    var ex=Object.keys(w.r[k].ex).sort(function(a,b){return w.r[k].ex[b]-w.r[k].ex[a]});
-   h+='<div class="mu-x">'+(ex.length?ex.map(function(e){return '<div class="xl"><span class="t">'+esc(exName(e))+(musOf(e)!==k?'<span class="mute"> · secondaire</span>':'')+'</span><span class="v num">'+fmt(w.r[k].ex[e])+'</span></div>'}).join(''):'<p class="mute small" style="margin:4px 0">Aucune série cette semaine.</p>')+'</div>';
+   h+='<div class="mu-x">'+(P==='w'?'':'<p class="mute small" style="margin:2px 0 4px">Total sur la période : '+fmt(w.r[k].n)+' série'+(w.r[k].n>1?'s':'')+'</p>')+(ex.length?ex.map(function(e){return '<div class="xl"><span class="t">'+esc(exName(e))+(musOf(e)!==k?'<span class="mute"> · secondaire</span>':'')+'</span><span class="v num">'+fmt(w.r[k].ex[e])+'</span></div>'}).join(''):'<p class="mute small" style="margin:4px 0">Aucune série sur cette période.</p>')+'</div>';
   }
  });
- h+='</div><p class="mute small" style="margin:14px 0 0">La zone grisée de chaque barre (10 à 20) est le repère courant en séries par semaine et par muscle. Les échauffements ne comptent pas. Une série compte 1 pour le muscle principal et ½ pour chaque muscle secondaire : règle ces tags depuis l\'engrenage d\'un exercice (dans le sélecteur ou la séance).</p>';
+ h+='</div><p class="mute small" style="margin:14px 0 0">'+(P==='w'?'Séries sur la semaine.':'Les barres montrent la moyenne de séries par semaine sur la période.')+' La zone grisée de chaque barre (10 à 20) est le repère courant en séries par semaine et par muscle. Les échauffements ne comptent pas. Une série compte 1 pour le muscle principal et ½ pour chaque muscle secondaire : règle ces tags depuis l\'engrenage d\'un exercice (dans le sélecteur ou la séance).</p>';
  return h;
 }
-function smoothBtn(){return '<div class="seg" style="margin:-6px 0 14px"><button class="tgl" data-act="smooth" aria-pressed="'+(!!S.set.smooth)+'">'+(S.set.smooth?svg('check',16)+'Courbe lissée':'Courbe lissée')+'</button></div>'}
 function bwView(h){
- h+='<div class="seg" style="margin:12px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['all','Tout']].map(function(m){return '<button data-act="bwr" data-v="'+m[0]+'" aria-pressed="'+((ui.bwr||'all')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'+smoothBtn();
+ h+='<div class="seg" style="margin:12px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(m){return '<button data-act="bwr" data-v="'+m[0]+'" aria-pressed="'+((ui.bwr||'all')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'
  if(!S.bw.length)return h+'<div class="empty"><h2>Pas encore de pesée</h2><p>Saisis ton poids depuis l\'accueil, sous le calendrier : touche un jour de la ligne « Poids ».</p></div>';
  var pts=bwSeries(ui.bwr||'all');
  if(!pts.length)return h+'<div class="empty"><p>Aucune pesée sur cette période.</p></div>';
@@ -855,7 +863,7 @@ function historyView(){
 }
 
 function series(ex,metric,range){
- var out=[],lim=range==='3m'?Date.now()-92*864e5:range==='6m'?Date.now()-183*864e5:0;
+ var out=[],lim=rangeLim(range);
  SESS.slice().reverse().forEach(function(s){
   var sets=[];s.items.forEach(function(it){if(it.ex===ex)sets=sets.concat(it.sets.filter(function(x){return x.t!=='w'}))});
   if(!sets.length)return;var d=pd(s.date);if(d.getTime()<lim)return;
@@ -913,7 +921,7 @@ function chartSVG(pts,sel,kind){
  var ticks=niceTicks(Math.min.apply(null,vs),Math.max.apply(null,vs),4),y0=ticks[0],y1=ticks[ticks.length-1];
  function X(t){return t1===t0?L+(W-L-R)/2:L+(t-t0)/(t1-t0)*(W-L-R)}
  function Y(v){return T+(1-(v-y0)/(y1-y0))*(H-T-B)}
- var sm=!!S.set.smooth&&pts.length>2,ck=(kind||'ex')+'|'+(kind==='bw'?ui.bwr:ui.px+'|'+ui.pm+'|'+ui.pr)+'|'+pts.length+'|'+sm,an=ck!==lastChartKey;lastChartKey=ck;
+ var sm=(kind==='bw'?(ui.bwr||'all'):ui.pr)==='all'&&pts.length>2,ck=(kind||'ex')+'|'+(kind==='bw'?ui.bwr:ui.px+'|'+ui.pm+'|'+ui.pr)+'|'+pts.length+'|'+sm,an=ck!==lastChartKey;lastChartKey=ck;
  var s='<svg class="chart'+(an?' ch-draw':'')+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbe de progression" data-chart="'+(kind||'ex')+'"><defs><linearGradient id="chg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--acc);stop-opacity:.38"/><stop offset="1" style="stop-color:var(--acc);stop-opacity:0"/></linearGradient></defs>';
  ticks.forEach(function(v){s+='<line class="ch-grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/><text class="ch-t" x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+fmt(v)+'</text>'});
  var labs=t1===t0?[t0]:[0,1,2].map(function(k){return t0+(t1-t0)*k/2});
@@ -951,7 +959,7 @@ function progressView(){
  if(!ui.px||!cnt[ui.px])ui.px=exs[0];
  h+='<div class="fld"><label for="px">Exercice</label><select class="in" id="px" data-f="px">'+exs.map(function(x){return '<option value="'+x+'"'+(x===ui.px?' selected':'')+'>'+esc(exName(x))+'</option>'}).join('')+'</select></div>';
  h+='<div class="seg" style="margin-top:12px">'+[['e1rm','1RM estimé'],['kg','Charge max'],['vol','Volume']].map(function(m){return '<button data-act="pm" data-v="'+m[0]+'" aria-pressed="'+(ui.pm===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
- h+='<div class="seg" style="margin:8px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['all','Tout']].map(function(m){return '<button data-act="pr" data-v="'+m[0]+'" aria-pressed="'+(ui.pr===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'+smoothBtn();
+ h+='<div class="seg" style="margin:8px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(m){return '<button data-act="pr" data-v="'+m[0]+'" aria-pressed="'+(ui.pr===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'
  var pts=series(ui.px,ui.pm,ui.pr);
  if(!pts.length)return h+'<div class="empty"><p>Aucune donnée sur cette période pour cet exercice.</p></div>';
  if(ui.sel==null||ui.sel>=pts.length)ui.sel=pts.length-1;
@@ -981,7 +989,7 @@ function settingsView(){
 
 function mainView(){
  var t=ui.tab,body=t==='today'?todayView():t==='prog'?programView():t==='hist'?historyView():t==='set'?settingsView():progressView();
- var tabs=[['today','Accueil','today'],['prog','Programme','prog'],['hist','Historique','hist'],['chart','Progrès','chart'],['set','Réglages','set']];
+ var tabs=[['hist','Historique','hist'],['prog','Programme','prog'],['today','Accueil','today'],['chart','Progrès','chart'],['set','Réglages','set']];
  return '<div class="screen"><div class="scroll">'+body+'</div><nav class="nav" aria-label="Navigation">'+tabs.map(function(x){return '<button data-act="tab" data-t="'+(x[0]==='chart'?'chart':x[0])+'"'+((t===x[0]||(t==='chart'&&x[0]==='chart'))?' aria-current="page"':'')+'>'+svg(x[2],24)+x[1]+'</button>'}).join('')+'</nav></div>';
 }
 
@@ -1239,7 +1247,6 @@ var A={
  closeSheet:function(){var b=ui.sheet&&ui.sheet.back;if(b){var sc=ui.sheet.sc||0;ui.sheet=b;render();var e=document.querySelector('.sheet-b');if(e)e.scrollTop=sc;return}ui.sheet=null;ui.startDate=null;render()},
  dayOpen:function(b){ui.route={name:'day',date:b.dataset.date};ui.sheet=null;render()},
  dayBack:function(){ui.route={name:'main'};ui.tab='today';render()},
- smooth:function(){S.set.smooth=!S.set.smooth;dirtyCfg();render()},
  acc:function(b){S.set.acc=b.dataset.v;dirtyCfg();render()},
  calToggle:function(){S.set.cal=!S.set.cal;dirtyCfg();render()},
  calPrev:function(){calStep(-1)},
@@ -1317,6 +1324,7 @@ var A={
  xmus2:function(b){var l=S.lib[ui.sheet.ex];if(!l)return;var a=Array.isArray(l.mus2)?l.mus2.slice():[],k=b.dataset.v,i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);if(a.length)l.mus2=a;else delete l.mus2;dirtyCfg();render()},
  muPrev:function(){ui.mw=(ui.mw||0)-1;ui.muo=null;ui.anim='prev';ui.animSel='.mu-list';render()},
  muNext:function(){if((ui.mw||0)>=0)return;ui.mw=ui.mw+1;ui.muo=null;ui.anim='next';ui.animSel='.mu-list';render()},
+ mper:function(b){ui.mp=b.dataset.v;ui.mw=0;ui.muo=null;render()},
  muNow:function(){ui.mw=0;ui.muo=null;ui.anim='next';ui.animSel='.mu-list';render()},
  muOpen:function(b){ui.muo=ui.muo===b.dataset.k?null:b.dataset.k;render()},
  restAdd:function(){if(ui.rest){ui.rest.end+=15000;ui.rest.tot=(ui.rest.tot||0)+15000;updateRest();armRest()}},
@@ -1374,7 +1382,7 @@ function addPicked(id){
  else{var t=curTpl();t.items.push({id:uid(),ex:id,sets:3,reps:'8-12'});dirtyCfg()}
  ui.sheet=null;render();
 }
-var TABS=['today','prog','hist','chart','set'];
+var TABS=['hist','prog','today','chart','set'];
 function updNext(){
  var rows=app.querySelectorAll('.srow:not(.head)'),f=false;
  Array.prototype.forEach.call(rows,function(r){r.classList.remove('next');if(!f&&!r.classList.contains('done')){r.classList.add('next');f=true}});
@@ -1491,7 +1499,7 @@ syncText=function(){if(gOn()){if(gBusy)return 'Sauvegarde…';if(gErr)return 'Dr
 var _saveLocal=saveLocal;
 saveLocal=function(){_saveLocal();gNeed=true};
 var _commit=commit;
-commit=function(k){_commit(k);if(gOn()&&!gSt.hold)gRun(false)};
+function gCool(){return !!(gSt.fail&&Date.now()-gSt.fail<6048e5)}
 try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='set'&&ui.route.name==='main')render()})}catch(e){}
 
 function gLoad(cb){
@@ -1529,7 +1537,7 @@ function gWrite(id,body){
  return gApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+bd},
   body:'--'+bd+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+bd+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+bd+'--'}).then(function(r){return r.json()});
 }
-function gDone(j){gSt.mod=j.modifiedTime;gSt.last=Date.now();gSt.hold=false;gSave();gNeed=false;gBusy=false;gErr='';gRefresh()}
+function gDone(j){gSt.mod=j.modifiedTime;gSt.last=Date.now();gSt.hold=false;gSt.fail=0;gSave();gNeed=false;gBusy=false;gErr='';gRefresh()}
 function gAsk(r,f,why){
  var n=(r&&r.SESS&&r.SESS.length)||0;
  gSt.hold=true;gSave();
@@ -1553,7 +1561,7 @@ function gRun(interactive){
   }
   return gWrite(f&&f.id,gPayload()).then(function(j){gDone(j);return 'ok'});
  }).catch(function(e){
-  gBusy=false;gErr=e&&e.error==='offline'?'hors ligne':'à reconnecter';gRefresh();return 'err';
+  gBusy=false;gErr=e&&e.error==='offline'?'hors ligne':'à reconnecter';if(!interactive&&!(e&&e.error==='offline')){gSt.fail=Date.now();gSave()}gRefresh();return 'err';
  });
 }
 function gPull(){
@@ -1563,17 +1571,18 @@ function gPull(){
   return gRead(f.id).then(function(r){gAsk(r,f,'manual')});
  }).catch(function(e){gBusy=false;gErr=e&&e.error==='offline'?'hors ligne':'à reconnecter';gRefresh()});
 }
-function gTap(){
- if(!gOn()||gBusy||gSt.hold)return;
- var age=Date.now()-(gSt.last||0);
- if((gNeed&&age>1800000)||age>864e5)gRun(false);
+function gBoot(){
+ if(!gOn()||gBusy||gSt.hold||gCool())return;
+ if(ui.route.name==='logger'||ui.rest)return;
+ if(Date.now()-(gSt.last||0)>=6048e5)gRun(false);
 }
-app.addEventListener('click',gTap,true);
+setTimeout(gBoot,1500);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(gBoot,800)});
 function gUI(){
  if(!GCID||GCID.indexOf('__')===0)return '';
  var pers='<p class="mute small" style="margin:8px 0 0">Stockage du téléphone protégé contre le nettoyage automatique : '+(gPers===1?'oui':gPers===0?'non (exporte régulièrement un fichier)':'inconnu')+'.</p>';
  if(!gOn())return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">Connecte ton compte Google une fois : l\'app sauvegarde ensuite toute seule dans un dossier caché de ton Drive. Rien n\'est partagé et l\'app ne voit pas le reste de ton Drive.</div></div><button class="btn" data-act="gConnect">Se connecter avec Google</button></div>'+pers;
- var st=gBusy?'Sauvegarde en cours…':gSt.hold?'⚠ Choix en attente : appuie sur « Sauvegarder maintenant ».':gErr?'⚠ '+gErr+'. Appuie sur « Sauvegarder maintenant » pour te reconnecter.':'Dernière sauvegarde : '+(gSt.last?gAgo(gSt.last):'aucune')+'. Automatique après chaque séance.';
+ var st=gBusy?'Sauvegarde en cours…':gSt.hold?'⚠ Choix en attente : appuie sur « Sauvegarder maintenant ».':gErr?'⚠ '+gErr+'. Appuie sur « Sauvegarder maintenant » pour te reconnecter.':'Dernière sauvegarde : '+(gSt.last?gAgo(gSt.last):'aucune')+'. Automatique à l\'ouverture de l\'app, au plus une fois par semaine.';
  return '<div class="card" style="margin-top:10px"><div><b>Sauvegarde Google Drive</b><div class="mute small">'+st+'</div></div><div class="row2"><button class="btn soft" data-act="gNow">Sauvegarder maintenant</button><button class="btn soft" data-act="gPull">Restaurer</button></div><button class="btn line" data-act="gOff">Se déconnecter</button></div>'+pers;
 }
 

@@ -1343,7 +1343,7 @@ function pgDays(metric){
  var map={};
  SESS.forEach(function(x){
   x.items.forEach(function(it){
-   var v=0;it.sets.forEach(function(q){if(q.t==='w'||!(q.kg>0))return;var z=metric==='kg'?q.kg:e1(q.kg,q.reps);if(z>v)v=z});
+   var v=0;it.sets.forEach(function(q){if(q.t==='w'||!(q.kg>0))return;if(metric==='vol'){v+=q.kg*(+q.reps||0);return}var z=metric==='kg'?q.kg:e1(q.kg,q.reps);if(z>v)v=z});
    if(v>0){var o=map[x.date]||(map[x.date]={});if(!(o[it.ex]>=v))o[it.ex]=v}
   });
  });
@@ -1405,7 +1405,7 @@ function pgSVG(pts,sel,an){
 }
 function pgView(h){
  var R=ui.pgr||'6m',M=ui.pgm||'e1rm';
- h+='<div class="seg" style="margin:0 0 8px">'+[['e1rm','1RM estimé'],['kg','Charge max']].map(function(o){return '<button data-act="pgm" data-v="'+o[0]+'" aria-pressed="'+(M===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
+ h+='<div class="seg" style="margin:0 0 8px">'+[['e1rm','1RM estimé'],['kg','Charge max'],['vol','Volume']].map(function(o){return '<button data-act="pgm" data-v="'+o[0]+'" aria-pressed="'+(M===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
  h+='<div class="seg" style="margin:0 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(o){return '<button data-act="pgr" data-v="'+o[0]+'" aria-pressed="'+(R===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
  var pts=pgSeries(R,M);ui.pgPts=pts;
  if(!pts.length)return h+emptyHTML('chart','Pas encore de progression','La courbe compare tes charges d\'une séance à l\'autre sur tes exercices les plus utilisés par muscle. Il faut au moins deux séances avec le même exercice sur la période.');
@@ -1421,7 +1421,7 @@ function pgView(h){
   pgSVG(pts,sel,an)+'</div>';
  var mx=pts[0],mn=pts[0];pts.forEach(function(q){if(q.pct>mx.pct)mx=q;if(q.pct<mn.pct)mn=q});
  h+='<div class="stats"><div><span>Total</span><b class="num '+cls(last.pct)+'">'+sg(last.pct)+'</b></div><div><span>Pic</span><b class="num">'+sg(mx.pct)+'</b></div><div><span>Creux</span><b class="num">'+sg(mn.pct)+'</b></div></div>';
- h+='<p class="mute small" style="margin:10px 0 0">Moyenne des progressions d\'une séance à l\'autre sur tes 2 exercices les plus utilisés par muscle (3 derniers mois glissants, '+(M==='kg'?'charge max':'1RM estimé')+'). Base 0 % au début de la période. Les exercices principaux peuvent changer au fil du temps.</p>';
+ h+='<p class="mute small" style="margin:10px 0 0">Moyenne des progressions d\'une séance à l\'autre sur tes 2 exercices les plus utilisés par muscle (3 derniers mois glissants, '+(M==='kg'?'charge max':M==='vol'?'volume par exercice : charge × reps':'1RM estimé')+'). Base 0 % au début de la période. Les exercices principaux peuvent changer au fil du temps.</p>';
  return h;
 }
 function progressView(){

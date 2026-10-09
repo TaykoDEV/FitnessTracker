@@ -1510,13 +1510,17 @@ function pgRealSeries(range,metric,win){
  var lim=rangeLim(range),all=pgReel(metric,win),out=all.filter(function(p){return p.d.getTime()>=lim});
  return out.length>1?out:[];
 }
+function pgWinFor(R){
+ if(R==='3m')return 1;
+ if(R==='all'){var o=SESS.length?pd(SESS[SESS.length-1].date).getTime():Date.now();return Date.now()-o<183*864e5?1:3}
+ return 3}
 function pgView(h){
  var R=ui.pgr||'6m',M=ui.pgm==='vol'?'vol':'e1rm',K=ui.pgk||'real';ui.pgm=M;
  function sgm(id,list,cur,act,mb){return '<div class="seg sm" style="margin:0 0 '+mb+'px">'+list.map(function(o){return '<button data-act="'+act+'" data-v="'+o[0]+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>'}
- h+='<div class="seg sm" style="margin:0 0 6px">'+[['real','Réel'],['glob','Global']].map(function(o){return '<button data-act="pgk" data-v="'+o[0]+'" aria-pressed="'+(K===o[0])+'">'+o[1]+'</button>'}).join('')+(K==='real'?[['1','vs 1 mois'],['3','vs 3 mois']].map(function(o,i){return '<button data-act="pgw" data-v="'+o[0]+'" aria-pressed="'+((ui.pgw===3?'3':'1')===o[0])+'"'+(i?'':' style="margin-left:10px"')+'>'+o[1]+'</button>'}).join(''):'')+'</div>';
+ h+='<div class="seg sm" style="margin:0 0 6px">'+[['real','Réel'],['glob','Global']].map(function(o){return '<button data-act="pgk" data-v="'+o[0]+'" aria-pressed="'+(K===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
  h+=sgm('m',[['e1rm','Force'],['vol','Volume']],M,'pgm',6);
  h+=sgm('r',[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']],R,'pgr',14);
- var W=ui.pgw===3?3:1;
+ var W=pgWinFor(R);
  var pts=K==='real'?pgRealSeries(R,M,W):pgSeries(R,M);ui.pgPts=pts;
  if(!pts.length)return h+emptyHTML('chart','Pas encore de progression','La courbe compare tes charges sur tes exercices les plus utilisés par muscle. Il faut au moins deux séances avec le même exercice sur la période.');
  if(ui.pgsel!=null&&ui.pgsel>=pts.length)ui.pgsel=null;
@@ -1762,7 +1766,7 @@ function sheetHTML(){
    '<button class="btn" data-act="closeSheet">OK</button></div></div></div>';
  }
  if(s.name==='pgmain'){
-  var real2=(ui.pgk||'real')==='real',cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">'+(real2?'Pris en compte au '+dlabelY(s.date)+' : chaque exercice est comparé à lui-même il y a '+(ui.pgw===3?'3 mois':'1 mois')+'.':'Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.')+'</p>';
+  var real2=(ui.pgk||'real')==='real',cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">'+(real2?'Pris en compte au '+dlabelY(s.date)+' : chaque exercice est comparé à lui-même il y a '+(pgWinFor(ui.pgr||'6m')===3?'3 mois':'1 mois')+'.':'Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.')+'</p>';
   var ms=real2?(ui.pgDets&&ui.pgDets[s.date]||[]).map(function(q){return {ex:q[0],mus:musOf(q[0]),n:q[4],pct:q[1],rec:q[3],w:q[2]}}):pgMainsAt(s.date,ui.pgm||'e1rm');
   ms.forEach(function(q){if(q.mus!==cur2){cur2=q.mus;hh+='<div class="month">'+MUS[q.mus].n+'</div>'}hh+='<div class="xl"><span class="t">'+mdot(q.ex)+' '+esc(exName(q.ex))+'<span class="mute" style="display:block;font-size:13px;margin-left:18px">'+q.n+' séance'+(q.n>1?'s':'')+' sur 3 mois'+(q.rec?' · en reprise':'')+(real2&&q.w<0.99?' · intégré progressivement':'')+'</span></span><span class="v num '+(q.pct==null?'':q.pct>0.05?'up':q.pct<-0.05?'dn':'')+'">'+(q.pct==null?'–':(q.pct>0?'+':'')+fmt(q.pct)+' %')+'</span></div>'});
   if(!ms.length)hh+='<p class="mute">Aucun exercice avec charge sur cette période.</p>';
@@ -2059,7 +2063,6 @@ var A={
  pgr:function(b){ui.pgr=b.dataset.v;ui.pgsel=null;render()},
  pgm:function(b){ui.pgm=b.dataset.v;ui.pgsel=null;render()},
  pgk:function(b){ui.pgk=b.dataset.v;ui.pgsel=null;render()},
- pgw:function(b){ui.pgw=+b.dataset.v;ui.pgsel=null;render()},
  pgMain:function(b){ui.sheet={name:'pgmain',date:b.dataset.ds};render()},
  bwr:function(b){ui.bwr=b.dataset.v;ui.bsel=null;render()},
  vrng:function(b){ui.vr=b.dataset.v;ui.vsel=null;render()},

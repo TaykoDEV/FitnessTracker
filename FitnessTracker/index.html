@@ -1645,17 +1645,19 @@ function animCount(){
   el.textContent=pre+'0';requestAnimationFrame(step);
  });
 }
-var inVT=false;
+var inVT=false,vtN=0,vtBusy=false;
 function MO(){try{return !(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)}catch(e){return true}}
-function vt(dir,fn){
- if(inVT||!document.startViewTransition||!MO()){fn();return}
- var de=document.documentElement,done=function(){if(de.getAttribute('data-vt')===dir)de.removeAttribute('data-vt')};
+function vt(dir,fn,onEnd){
+ if(inVT||!document.startViewTransition||!MO()){fn();return false}
+ var de=document.documentElement,my=++vtN,fin=false;
+ var done=function(){if(fin)return;fin=true;if(my===vtN){vtBusy=false;if(de.getAttribute('data-vt')===dir)de.removeAttribute('data-vt')}if(onEnd)onEnd()};
  try{
-  de.setAttribute('data-vt',dir);
+  vtBusy=true;de.setAttribute('data-vt',dir);
   var t=document.startViewTransition(function(){inVT=true;try{fn()}finally{inVT=false}});
   t.finished.then(done,done);
-  setTimeout(done,1500);
- }catch(e){done();inVT=false;fn()}
+  setTimeout(done,1600);
+  return true;
+ }catch(e){fin=true;if(my===vtN){vtBusy=false;de.removeAttribute('data-vt')}inVT=false;fn();if(onEnd)onEnd();return false}
 }
 function ovGhost(el){
  var g=el.cloneNode(true),sb=el.querySelector('.sheet-b');
@@ -2287,6 +2289,7 @@ function profInject(){
  profPrev=on;
  if(on)hd.insertAdjacentHTML('afterend','<div class="rob"><span>Profil de <b>'+esc(other)+'</b> · lecture seule · '+(shP.fetched?gAgo(shP.fetched):'')+'</span><button class="rb" data-act="shRefresh" aria-label="Actualiser">'+svg('refresh',18)+'</button></div>');
 }
+var profBusy=false;
 function profCircle(go,back){
  var de=document.documentElement,btn=app.querySelector('.prof');
  if(!document.startViewTransition||!MO()||inVT||!btn)return false;
@@ -2296,19 +2299,22 @@ function profCircle(go,back){
  ring.style.setProperty('--cx',cx+'px');ring.style.setProperty('--cy',cy+'px');ring.style.setProperty('--d',(R*2)+'px');
  ring.style.setProperty('--rc',accHex(back?ownAcc():peerAcc()));
  document.body.appendChild(ring);setTimeout(function(){if(ring.parentNode)ring.parentNode.removeChild(ring)},1000);
- vt('circ',go);return true;
+ vt('circ',go,function(){profBusy=false});return true;
 }
+var stgN=0;
 function profStagger(){
  if(!MO())return;
- var sc=app.querySelector('.scroll');if(!sc)return;var n=0,ch=sc.children;
+ var sc=app.querySelector('.scroll');if(!sc)return;var n=0,ch=sc.children,my=++stgN;
  for(var i=0;i<ch.length&&n<9;i++){if(ch[i].classList.contains('hd'))continue;ch[i].style.setProperty('--si',n++);ch[i].classList.add('stg2')}
- setTimeout(function(){[].forEach.call(sc.querySelectorAll('.stg2'),function(e){e.classList.remove('stg2')})},1300);
+ setTimeout(function(){if(my!==stgN)return;[].forEach.call(sc.querySelectorAll('.stg2'),function(e){e.classList.remove('stg2')})},1300);
 }
 A.profSw=function(){
+ if(profBusy||vtBusy)return;
  var back=!!ui.ro;if(!back&&(!shP||!shP.data))return;
  hap(10);
  var go=function(){if(back)roExit();else roEnter();render();profStagger()};
- if(profCircle(go,back)===false){ui.anim=back?'prev':'next';ui.animSel='.scroll';go()}
+ profBusy=true;
+ if(profCircle(go,back)===false){profBusy=false;ui.anim=back?'prev':'next';ui.animSel='.scroll';go()}
  if(!back&&Date.now()-(shP.fetched||0)>120000)setTimeout(function(){shRefreshP(false)},1500);
 };
 A.shRefresh=function(){shRefreshP(true)};

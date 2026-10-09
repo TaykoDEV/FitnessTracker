@@ -75,6 +75,9 @@ html[data-ro]::after{content:'';position:fixed;inset:0;z-index:99999;pointer-eve
 .rob b{color:var(--fg)}.rob .rb{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;color:var(--mute)}
 .rob .rb svg{width:18px;height:18px}
 .shin{width:100%}
+.ptop{margin:0 0 12px}
+.ch-zero{stroke:var(--mute);stroke-width:1;stroke-dasharray:4 4;opacity:.7}
+.ch-t0{fill:var(--fg);font-weight:700}
 .recap{margin-top:18px}
 .rc-g{display:grid;grid-template-columns:1fr 84px 84px;gap:10px 8px;align-items:center}
 .rc-g .rn{font:700 14px var(--body);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -152,6 +155,8 @@ h3{margin:0;font:700 var(--fs-lg)/1.1 var(--disp);text-transform:uppercase}
 .ex-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .ex-h p{margin:2px 0 0;font-size:14px;color:var(--mute)}
 .tools{display:flex;flex:none;margin:-6px -6px 0 0}
+.tools .ibtn{width:40px}
+.ex-h>div:first-child{min-width:0}
 .srow{display:grid;grid-template-columns:34px minmax(0,1fr) 76px 64px 48px;gap:8px;align-items:center;padding:4px 6px;margin:0 -6px;border-radius:12px;transition:background .2s}
 .srow.done{background:color-mix(in srgb,var(--acc) 11%,transparent)}
 .srow.next{background:color-mix(in srgb,var(--fg) 6%,transparent);box-shadow:inset 3px 0 0 var(--acc)}
@@ -1053,7 +1058,7 @@ function plateau(ex){
 function platHTML(ex){
  var p=plateau(ex);if(!p)return '';
  var off=S.lib[ex]&&S.lib[ex].platOff;if(off&&p.mx<=off.mx*1.01)return '';
- var tip=p.reps>=12?'Tu fais déjà beaucoup de reps : monte la charge de 2,5 kg et vise 8–10 reps.':p.reps<=5?'Essaie une semaine allégée (−10 %), puis reviens plus fort.':'Essaie une semaine allégée (−10 %) ou change la plage de reps (6–8 ou 10–12).';
+ var tip=p.reps>=12?'Monte la charge de 2,5 kg et vise 8–10 reps.':p.reps<=5?'Essaie une semaine allégée (−10 %), puis reviens plus fort.':'Essaie une semaine allégée (−10 %) ou change la plage de reps (6–8 ou 10–12).';
  return '<div class="platn">'+svg('flat',20)+'<span><b>Plateau</b> · aucun record depuis '+p.k+' séances. '+tip+'</span>'+(ui.ro?'':'<button class="platx" data-act="platOff" data-ex="'+ex+'" aria-label="Masquer ce conseil">'+svg('x',16)+'</button>')+'</div>';
 }
 function exSum(s,it){
@@ -1328,8 +1333,101 @@ function chartSVG(pts,sel,kind){
  if(kind!=='bw'&&kind!=='vol'&&pts.length>1){var cx=X(pts[bi].d.getTime()),cy=Y(pts[bi].v);s+='<g class="ch-cr" transform="translate('+(cx-9).toFixed(1)+','+(cy-30).toFixed(1)+') scale(.75)" aria-hidden="true">'+IC.crown+'</g>'}
  return s+'</svg>';
 }
+
+/* ---------- Progression globale (exercices principaux) ---------- */
+var pgDC=null;
+function pgDays(metric){
+ var u=0,i;for(i=0;i<SESS.length;i++){var q=SESS[i].upd||0;if(q>u)u=q}
+ var key=SESS.length+'|'+u+'|'+metric;
+ if(pgDC&&pgDC.ss===SESS&&pgDC.key===key)return pgDC.v;
+ var map={};
+ SESS.forEach(function(x){
+  x.items.forEach(function(it){
+   var v=0;it.sets.forEach(function(q){if(q.t==='w'||!(q.kg>0))return;var z=metric==='kg'?q.kg:e1(q.kg,q.reps);if(z>v)v=z});
+   if(v>0){var o=map[x.date]||(map[x.date]={});if(!(o[it.ex]>=v))o[it.ex]=v}
+  });
+ });
+ var v=Object.keys(map).sort().map(function(ds){return {ds:ds,t:pd(ds).getTime(),obs:map[ds]}});
+ pgDC={ss:SESS,key:key,v:v};return v;
+}
+function pgMainsFrom(cnt){
+ var hid=S.set.hideMu||{},by={},out=[];
+ Object.keys(cnt).forEach(function(ex){if(!(cnt[ex]>0))return;var m=musOf(ex);if(m==='autre'||hid[m])return;(by[m]=by[m]||[]).push(ex)});
+ Object.keys(MUS).forEach(function(m){if(!by[m])return;by[m].sort(function(a,b){return cnt[b]-cnt[a]||(a<b?-1:1)});by[m].slice(0,2).forEach(function(ex){out.push(ex)})});
+ return out;
+}
+function pgWinStart(t){var w=new Date(t);w.setMonth(w.getMonth()-3);return w.getTime()}
+function pgSeries(range,metric){
+ var days=pgDays(metric),lim=rangeLim(range),cnt={},last={},lo=0,idx=1,pts=[],started=false,startT=range==='all'&&days.length?days[0].t:lim;
+ for(var k=0;k<days.length;k++){
+  var D=days[k],wt=pgWinStart(D.t);
+  Object.keys(D.obs).forEach(function(ex){cnt[ex]=(cnt[ex]||0)+1});
+  while(lo<k&&days[lo].t<=wt){Object.keys(days[lo].obs).forEach(function(ex){cnt[ex]--});lo++}
+  if(D.t>=startT){
+   if(!started){started=true;var bd=new Date(D.t-864e5);pts.push({d:bd,ds:iso(bd),pct:0,step:0,n:0,base:true})}
+   var rs=[];
+   pgMainsFrom(cnt).forEach(function(ex){if(D.obs[ex]&&last[ex])rs.push(D.obs[ex]/last[ex]-1)});
+   if(rs.length){var a=0;rs.forEach(function(r){a+=r});a/=rs.length;idx*=1+a;pts.push({d:new Date(D.t),ds:D.ds,pct:(idx-1)*100,step:a*100,n:rs.length})}
+  }
+  Object.keys(D.obs).forEach(function(ex){last[ex]=D.obs[ex]});
+ }
+ return pts.length>1?pts:[];
+}
+function pgMainsAt(ds,metric){
+ var days=pgDays(metric),t=pd(ds).getTime(),wt=pgWinStart(t),cnt={},first={},lastv={},tot={};
+ days.forEach(function(D){
+  if(D.t>t||D.t<=wt)return;
+  Object.keys(D.obs).forEach(function(ex){cnt[ex]=(cnt[ex]||0)+1;if(first[ex]===undefined)first[ex]=D.obs[ex];lastv[ex]=D.obs[ex]});
+ });
+ return pgMainsFrom(cnt).map(function(ex){return {ex:ex,mus:musOf(ex),n:cnt[ex],pct:cnt[ex]>1&&first[ex]>0?(lastv[ex]/first[ex]-1)*100:null}});
+}
+function pgSVG(pts,sel,an){
+ var W=360,H=240,L=44,R=14,T=26,B=30;
+ var ts=pts.map(function(p){return p.d.getTime()}),t0=Math.min.apply(null,ts),t1=Math.max.apply(null,ts);
+ var vs=pts.map(function(p){return p.pct});
+ var ticks=niceTicks(Math.min(0,Math.min.apply(null,vs)),Math.max(0,Math.max.apply(null,vs)),4),y0=ticks[0],y1=ticks[ticks.length-1];
+ function X(t){return t1===t0?L+(W-L-R)/2:L+(t-t0)/(t1-t0)*(W-L-R)}
+ function Y(v){return T+(1-(v-y0)/(y1-y0))*(H-T-B)}
+ function F(v){return (v>0?'+':'')+fmt(v)+'%'}
+ var s='<svg class="chart'+(an?' ch-draw':'')+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbe de progression globale" data-chart="pg"><defs><linearGradient id="chg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--acc);stop-opacity:.34"/><stop offset="1" style="stop-color:var(--acc);stop-opacity:0"/></linearGradient></defs>';
+ ticks.forEach(function(v){var z=Math.abs(v)<1e-9;s+='<line class="'+(z?'ch-zero':'ch-grid')+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/><text class="ch-t'+(z?' ch-t0':'')+'" x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+(z?'0%':F(v))+'</text>'});
+ var labs=t1===t0?[t0]:[0,1,2].map(function(k){return t0+(t1-t0)*k/2});
+ labs.forEach(function(t,k){var a=labs.length===1?'middle':k===0?'start':k===labs.length-1?'end':'middle';s+='<text class="ch-t" x="'+X(t).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+a+'">'+new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})+'</text>'});
+ var sm=pts.length>2?smoothVals(vs):vs,P=pts.map(function(p,i){return [X(p.d.getTime()),Y(sm[i])]}),z0=Y(0);
+ var d=smoothPath(P);
+ s+='<path class="ch-area" d="'+d+'L'+X(t1).toFixed(1)+','+z0.toFixed(1)+'L'+X(t0).toFixed(1)+','+z0.toFixed(1)+'Z"/><path class="ch-line" pathLength="1" d="'+d+'"/>';
+ if(sel!=null){var sx=X(pts[sel].d.getTime());s+='<line class="ch-guide" x1="'+sx.toFixed(1)+'" x2="'+sx.toFixed(1)+'" y1="'+T+'" y2="'+(H-B)+'"/>'}
+ pts.forEach(function(p,i){
+  if(i!==sel&&(pts.length>45||i===0))return;
+  s+='<circle class="'+(i===sel?'ch-sel':'ch-pt')+'" cx="'+X(p.d.getTime()).toFixed(1)+'" cy="'+Y(p.pct).toFixed(1)+'" r="'+(i===sel?6:3.5)+'"/>';
+ });
+ return s+'</svg>';
+}
+function pgView(h){
+ var R=ui.pgr||'6m',M=ui.pgm||'e1rm';
+ h+='<div class="seg" style="margin:0 0 8px">'+[['e1rm','1RM estimé'],['kg','Charge max']].map(function(o){return '<button data-act="pgm" data-v="'+o[0]+'" aria-pressed="'+(M===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
+ h+='<div class="seg" style="margin:0 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(o){return '<button data-act="pgr" data-v="'+o[0]+'" aria-pressed="'+(R===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
+ var pts=pgSeries(R,M);ui.pgPts=pts;
+ if(!pts.length)return h+emptyHTML('chart','Pas encore de progression','La courbe compare tes charges d\'une séance à l\'autre sur tes exercices les plus utilisés par muscle. Il faut au moins deux séances avec le même exercice sur la période.');
+ if(ui.pgsel!=null&&ui.pgsel>=pts.length)ui.pgsel=null;
+ var sel=ui.pgsel,last=pts[pts.length-1],cur=sel!=null?pts[sel]:last;
+ function sg(v){return (v>0?'+':'')+fmt(v)+' %'}
+ var cls=function(v){return v>0.05?'up':v<-0.05?'dn':''};
+ var left=sel==null?'Sur la période':cur.base?'Début de période':dlabelY(cur.ds);
+ var right=sel==null?'Touche un point<br>de la courbe':cur.base?'':'ce jour<br><b class="'+cls(cur.step)+'">'+sg(cur.step)+'</b>';
+ var ck='pg|'+R+'|'+M+'|'+pts.length,an=ck!==lastChartKey;lastChartKey=ck;
+ h+='<div class="cardc"><div class="read"><div><span>'+left+'</span><br><b class="num">'+sg(cur.pct)+'</b></div><span class="num" style="text-align:right">'+right+'</span></div>'+
+  (sel!=null&&!cur.base?'<div style="padding:0 8px 4px"><button class="pill" data-act="pgMain" data-ds="'+cur.ds+'">'+svg('prog',16)+' Exercices principaux</button></div>':'')+
+  pgSVG(pts,sel,an)+'</div>';
+ var mx=pts[0],mn=pts[0];pts.forEach(function(q){if(q.pct>mx.pct)mx=q;if(q.pct<mn.pct)mn=q});
+ h+='<div class="stats"><div><span>Total</span><b class="num '+cls(last.pct)+'">'+sg(last.pct)+'</b></div><div><span>Pic</span><b class="num">'+sg(mx.pct)+'</b></div><div><span>Creux</span><b class="num">'+sg(mn.pct)+'</b></div></div>';
+ h+='<p class="mute small" style="margin:10px 0 0">Moyenne des progressions d\'une séance à l\'autre sur tes 2 exercices les plus utilisés par muscle (3 derniers mois glissants, '+(M==='kg'?'charge max':'1RM estimé')+'). Base 0 % au début de la période. Les exercices principaux peuvent changer au fil du temps.</p>';
+ return h;
+}
 function progressView(){
  var h='<header class="hd"><div><p class="eyebrow">Performances</p><h1>Progrès</h1></div></header>';
+ h+='<div class="seg ptop">'+[['prog','Progression'],['det','Détail']].map(function(o){return '<button data-act="ptop" data-v="'+o[0]+'" aria-pressed="'+((ui.ptop||'prog')===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
+ if((ui.ptop||'prog')==='prog')return pgView(h);
  h+='<div class="seg">'+[['ex','Exercices'],['mu','Muscles'],['vol','Volume'],['bw','Poids']].filter(function(m){return !(ui.ro&&m[0]==='bw')}).map(function(m){return '<button data-act="pview" data-v="'+m[0]+'" aria-pressed="'+((ui.pv||'ex')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
  if(ui.pv==='bw')return bwView(h);
  if(ui.pv==='vol')return volView(h);
@@ -1393,10 +1491,11 @@ function loggerView(){
  c.items.forEach(function(it,i){
   var prev=prevSets(it.ex,c.id);
   if(isA&&setsAllDone(it)&&(ui.colEx||{})[it.id]!==false){h+=colHTML(it,i,c);return}
-  h+='<section class="ex"><div class="ex-h"><div><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.target?'<p>Objectif '+esc(it.target)+'</p>':'')+(it.sug?'<p class="sug">↑ +'+fmt(it.sug.inc)+' kg · '+it.sug.hi+' reps atteintes partout la dernière fois</p>':'')+exChip(it.ex)+'</div><div class="tools"><button class="ibtn" data-act="exNote" data-i="'+i+'" aria-label="Note">'+svg('note',20)+'</button><button class="ibtn" data-act="exUp" data-i="'+i+'" aria-label="Monter">'+svg('up',20)+'</button><button class="ibtn" data-act="exDown" data-i="'+i+'" aria-label="Descendre">'+svg('down',20)+'</button><button class="ibtn bad" data-act="exDel" data-i="'+i+'" aria-label="Retirer l\'exercice">'+svg('x',20)+'</button></div></div>'+platHTML(it.ex);
+  var ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
+  h+='<section class="ex"><div class="ex-h"><div><h3>'+mdot(it.ex)+esc(exName(it.ex))+'</h3>'+(it.target?'<p>Objectif '+esc(it.target)+'</p>':'')+(it.sug?'<p class="sug">↑ +'+fmt(it.sug.inc)+' kg · '+it.sug.hi+' reps atteintes partout la dernière fois</p>':'')+'</div><div class="tools"><button class="ibtn" data-act="exSwap" data-i="'+i+'" aria-label="Remplacer l\'exercice (machine prise)">'+svg('refresh',20)+'</button><button class="ibtn" data-act="exNote" data-i="'+i+'" aria-label="Note">'+svg('note',20)+'</button><button class="ibtn" data-act="exUp" data-i="'+i+'" aria-label="Monter">'+svg('up',20)+'</button><button class="ibtn" data-act="exDown" data-i="'+i+'" aria-label="Descendre">'+svg('down',20)+'</button><button class="ibtn bad" data-act="exDel" data-i="'+i+'" aria-label="Retirer l\'exercice">'+svg('x',20)+'</button></div></div>'+exChip(it.ex)+(ci>=0?'':platHTML(it.ex));
   if(it.noteOpen||it.note)h+='<div class="note"><input class="in t" id="n-'+it.id+'" data-f="note" data-i="'+i+'" placeholder="Note (réglage machine, sensation…)" value="'+esc(it.note)+'"></div>';
   h+='<div class="srow head"><span>#</span><span>Préc.</span><span>kg</span><span>reps</span><span>'+svg('check',16)+'</span></div>';
-  var kk=0,ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
+  var kk=0;
   it.sets.forEach(function(x,j){
    var nrm=isNorm(x),p=nrm?prev[kk]:null;if(nrm)kk++;
    var lab=x.t==='w'?'É':x.t==='d'?'D':String(kk),tn=x.t==='w'?'échauffement':x.t==='d'?'dégressive':x.t==='f'?'échec':'normale';
@@ -1545,6 +1644,12 @@ function sheetHTML(){
      '<p class="mute small" style="margin:0">Estimation : ≈ '+fmt(est)+' kcal pour 10 reps à '+fmt(bw||75)+' kg'+(bw?'':' (poids par défaut, renseigne le tien sur l\'accueil)')+', intensité '+LV[lv].toLowerCase()+(auto?' (auto selon le muscle)':'')+'. Calcul : MET × poids × durée de la série (reps × 3 s + repos). Une valeur saisie remplace le calcul.</p>';
    })()+
    '<button class="btn" data-act="closeSheet">OK</button></div></div></div>';
+ }
+ if(s.name==='pgmain'){
+  var ms=pgMainsAt(s.date,ui.pgm||'e1rm'),cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.</p>';
+  ms.forEach(function(q){if(q.mus!==cur2){cur2=q.mus;hh+='<div class="month">'+MUS[q.mus].n+'</div>'}hh+='<div class="xl"><span class="t">'+mdot(q.ex)+' '+esc(exName(q.ex))+'<span class="mute" style="display:block;font-size:13px;margin-left:18px">'+q.n+' séance'+(q.n>1?'s':'')+' sur 3 mois</span></span><span class="v num '+(q.pct==null?'':q.pct>0.05?'up':q.pct<-0.05?'dn':'')+'">'+(q.pct==null?'–':(q.pct>0?'+':'')+fmt(q.pct)+' %')+'</span></div>'});
+  if(!ms.length)hh+='<p class="mute">Aucun exercice avec charge sur cette période.</p>';
+  return hh+'</div></div></div>';
  }
  if(s.name==='bw'){
   var ex=S.bw.find(function(x){return x.d===s.date}),lw=bwAt(s.date);
@@ -1790,6 +1895,7 @@ var A={
  finishDone:function(){commit(false)},
  logAbandon:function(){ui.modal={title:'Abandonner la séance ?',text:'Tout ce qui est saisi dans cette séance sera perdu.',btns:[{act:'abandonOk',label:'Abandonner',danger:true},{act:'closeModal',label:'Continuer',line:true}]};render()},
  abandonOk:function(){S.active=null;ui.cur=null;ui.curKind=null;ui.rest=null;ui.modal=null;ui.route={name:'main'};dirtyCfg();render()},
+ exSwap:function(b){var it=ui.cur.items[+b.dataset.i];if(it.sets.some(function(x){return x.done})){toast('Séries déjà validées : ajoute plutôt un exercice');return}ui.pq='';ui.pnm=null;ui.sheet={name:'picker',for:'swap',i:+b.dataset.i};render()},
  exUp:function(b){mv(ui.cur.items,+b.dataset.i,-1);touch();render()},
  exDown:function(b){mv(ui.cur.items,+b.dataset.i,1);touch();render()},
  exDel:function(b){ui.cur.items.splice(+b.dataset.i,1);touch();render()},
@@ -1831,6 +1937,10 @@ var A={
  bwSave:function(){var v=num(ui.sheet.val);if(!(v>=20&&v<=400)){toast('Poids invalide');return}var ds=ui.sheet.date;S.bw=S.bw.filter(function(x){return x.d!==ds});S.bw.push({d:ds,kg:Math.round(v*10)/10});S.bw.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0});dirtyCfg();ui.sheet=null;render();toast('Poids enregistré')},
  bwDel:function(){var ds=ui.sheet.date;S.bw=S.bw.filter(function(x){return x.d!==ds});dirtyCfg();ui.sheet=null;render()},
  pview:function(b){ui.pv=b.dataset.v;render()},
+ ptop:function(b){ui.ptop=b.dataset.v;ui.pgsel=null;render()},
+ pgr:function(b){ui.pgr=b.dataset.v;ui.pgsel=null;render()},
+ pgm:function(b){ui.pgm=b.dataset.v;ui.pgsel=null;render()},
+ pgMain:function(b){ui.sheet={name:'pgmain',date:b.dataset.ds};render()},
  bwr:function(b){ui.bwr=b.dataset.v;ui.bsel=null;render()},
  vrng:function(b){ui.vr=b.dataset.v;ui.vsel=null;render()},
  vmet:function(b){ui.vm=b.dataset.v;ui.vsel=null;render()},
@@ -1907,7 +2017,8 @@ var A={
  pr:function(b){ui.pr=b.dataset.v;ui.sel=null;render()}
 };
 function addPicked(id){
- if(ui.sheet.for==='log'){ui.cur.items.push(mkItem(id,3,''));touch()}
+ if(ui.sheet.for==='swap'){var o=ui.cur.items[ui.sheet.i];if(o){var n=mkItem(id,o.sets.length||3,'');n.note=o.note||'';ui.cur.items[ui.sheet.i]=n;touch();toast('Exercice remplacé')}}
+ else if(ui.sheet.for==='log'){ui.cur.items.push(mkItem(id,3,''));touch()}
  else{var t=curTpl();t.items.push({id:uid(),ex:id,sets:3,reps:'8-12'});dirtyCfg()}
  ui.sheet=null;render();
 }
@@ -1921,6 +2032,9 @@ function updCrown(i){
  var it=c.items[i],had=sec.querySelector('.snw .crown')?1:0;
  Array.prototype.forEach.call(sec.querySelectorAll('.snw .crown'),function(e){e.remove()});
  var ci=crownIdx(it.sets,prevBestE1(it.ex,c),true);
+ var pn=sec.querySelector('.platn');
+ if(ci>=0&&pn)pn.remove();
+ else if(ci<0&&!pn){var eh=sec.querySelector('.ex-h');if(eh)eh.insertAdjacentHTML('afterend',platHTML(it.ex))}
  if(ci>=0){var w=sec.querySelectorAll('.srow:not(.head) .snw')[ci];if(w){w.insertAdjacentHTML('beforeend',crownHTML(23,!had));if(!had){toast('Nouveau record !');sparkle(w);recShine(sec);hap([20,50,35])}}}
 }
 function calStep(d){var c=ui.cal;if(!c)return;c.m+=d;if(c.m<0){c.m=11;c.y--}if(c.m>11){c.m=0;c.y++}ui.anim=d>0?'next':'prev';ui.animSel='.cal-g';render()}
@@ -1974,19 +2088,19 @@ app.addEventListener('touchcancel',function(){t0=null},{passive:true});
 app.addEventListener('click',function(e){
  var ch=e.target.closest('svg[data-chart]');
  if(ch){
-  var kind=ch.dataset.chart,pts=kind==='bw'?bwSeries(ui.bwr||'all'):kind==='vol'?volSeries(ui.vr||'6m',ui.vm||'v'):series(ui.px,ui.pm,ui.pr);if(!pts.length)return;
+  var kind=ch.dataset.chart,pts=kind==='bw'?bwSeries(ui.bwr||'all'):kind==='vol'?volSeries(ui.vr||'6m',ui.vm||'v'):kind==='pg'?(ui.pgPts||[]):series(ui.px,ui.pm,ui.pr);if(!pts.length)return;
   var r=ch.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*360;
   var ts=pts.map(function(p){return p.d.getTime()}),t0=Math.min.apply(null,ts),t1=Math.max.apply(null,ts);
   var best=0,bd=1e9;
   pts.forEach(function(p,i){var px=t1===t0?44+(360-44-14)/2:44+(p.d.getTime()-t0)/(t1-t0)*(360-44-14);var d=Math.abs(px-x);if(d<bd){bd=d;best=i}});
-  if(kind==='bw')ui.bsel=best;else if(kind==='vol')ui.vsel=best;else ui.sel=best;render();return;
+  if(kind==='bw')ui.bsel=best;else if(kind==='vol')ui.vsel=best;else if(kind==='pg')ui.pgsel=best;else ui.sel=best;render();return;
  }
  var b=e.target.closest('[data-act]');if(!b||b.disabled)return;
  var f=A[b.dataset.act];
  if(f&&ui.ro&&!ROK[b.dataset.act]){toast('Profil en lecture seule');return}
  if(f)f(b,e);
 });
-var ROK={tab:1,closeSheet:1,dayOpen:1,dayBack:1,calToggle:1,calPrev:1,calNext:1,calNow:1,wkPrev:1,wkNext:1,wkNow:1,dayPrev:1,dayNext:1,closeModal:1,pview:1,vrng:1,vmet:1,exOpen:1,pxPick:1,pxcat:1,pm:1,pr:1,muPrev:1,muNext:1,mper:1,muNow:1,muOpen:1,sessOpen:1,sessBack:1,sessShare:1,profSw:1,shRefresh:1};
+var ROK={ptop:1,pgr:1,pgm:1,pgMain:1,tab:1,closeSheet:1,dayOpen:1,dayBack:1,calToggle:1,calPrev:1,calNext:1,calNow:1,wkPrev:1,wkNext:1,wkNow:1,dayPrev:1,dayNext:1,closeModal:1,pview:1,vrng:1,vmet:1,exOpen:1,pxPick:1,pxcat:1,pm:1,pr:1,muPrev:1,muNext:1,mper:1,muNow:1,muOpen:1,sessOpen:1,sessBack:1,sessShare:1,profSw:1,shRefresh:1};
 var ROI={pxq:1,px:1};
 var I={
  xrest:function(t){var l=S.lib[ui.sheet.ex];if(!l)return;var v=Math.round(num(t.value));if(v>=10&&v<=900)l.rest=v;else delete l.rest;dirtyCfg()},
@@ -2269,7 +2383,7 @@ function roLoad(){
  var ps=shPrep.S;ps.set=JSON.parse(JSON.stringify(OWN.S.set));ps.set.acc=peerAcc();
  S=ps;SESS=shPrep.SESS;
 }
-function roReset(){ui.route={name:'main'};ui.sheet=null;ui.modal=null;ui.px=null;ui.sel=null;ui.bsel=null;ui.vsel=null;ui.muo=null;if(ui.pv==='bw')ui.pv='ex'}
+function roReset(){ui.pgsel=null;ui.route={name:'main'};ui.sheet=null;ui.modal=null;ui.px=null;ui.sel=null;ui.bsel=null;ui.vsel=null;ui.muo=null;if(ui.pv==='bw')ui.pv='ex'}
 function roEnter(){
  if(!shP||!shP.data||ui.ro)return;
  OWN={S:S,SESS:SESS};ui.ro={name:shP.name};roLoad();roReset();

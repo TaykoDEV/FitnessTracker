@@ -1158,10 +1158,9 @@ function todayView(){
   h+='<section class="card cmp"><div><p class="eyebrow">Repos aujourd\'hui</p><p class="cmp-t">'+(nt?'Prochaine : '+DAYS[dow(nd)].toLowerCase().slice(0,3)+'. · '+esc(nt.name):'Pas de séance prévue')+'</p></div><button class="btn soft s" data-act="openStart">Séance libre</button></section>';
  }
  if(!ui.ro&&(S.active||(tpl&&SESS.length))){h+='<div style="height:10px"></div><button class="btn line" data-act="openStart"'+(S.active?' disabled style="opacity:.5"':'')+'>Choisir une autre séance</button>'}
- if(!ui.ro&&typeof recapHTML==='function')h+=recapHTML();
  h+=S.set.cal?'<div class="shd"><h2>Calendrier</h2><button class="pill" data-act="calToggle" aria-expanded="true">Masquer</button></div>'+calHTML():calSum();
+ if(!ui.ro&&typeof recapHTML==='function')h+=recapHTML();
  h+=muFresh();
- if(!ui.ro)h+=bwHome(now,tds);
  return h;
 }
 function bwHome(now,tds){
@@ -1237,17 +1236,18 @@ function volView(h){
  return h;
 }
 function bwView(h){
+ var td=todayISO(),addB=S.bw.some(function(x){return x.d===td})?'':'<button class="btn" data-act="bwOpen" data-date="'+td+'" style="margin:12px 0 4px">'+svg('plus',20)+'Ajouter la pesée du jour</button>';
  h+='<div class="seg" style="margin:12px 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(m){return '<button data-act="bwr" data-v="'+m[0]+'" aria-pressed="'+((ui.bwr||'all')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>'
- if(!S.bw.length)return h+emptyHTML('set','Pas encore de pesée','Touche un jour de la ligne « Poids » ci-dessus pour saisir ton poids.');
+ if(!S.bw.length)return h+emptyHTML('set','Pas encore de pesée','Ajoute ta première pesée pour suivre ton poids dans le temps. Il sert aussi à estimer les calories.',addB);
  var pts=bwSeries(ui.bwr||'all');
- if(!pts.length)return h+emptyHTML('chart','','Aucune pesée sur cette période.','',1);
+ if(!pts.length)return h+emptyHTML('chart','','Aucune pesée sur cette période.',addB,1);
  if(ui.bsel==null||ui.bsel>=pts.length)ui.bsel=pts.length-1;
  var p=pts[ui.bsel],first=pts[0],last=pts[pts.length-1];
  function sg(v){return (v>0?'+':'')+fmt(v)}
- h+='<div class="cardc"><div class="read"><div><span>'+dlabelY(p.ds)+'</span><br><b class="num">'+fmt(p.v)+' kg</b></div><span class="num">'+(ui.bsel>0?'vs précédente<br>'+sg(Math.round((p.v-pts[ui.bsel-1].v)*10)/10)+' kg':'')+'</span></div>'+chartSVG(pts,ui.bsel,'bw')+'</div>';
+ h+='<div class="cardc"><div class="read"><div><span>'+dlabelY(p.ds)+'</span><br><b class="num">'+fmt(p.v)+' kg</b></div><span class="num">'+(ui.bsel>0?'vs précédente<br>'+sg(Math.round((p.v-pts[ui.bsel-1].v)*10)/10)+' kg':'')+'</span></div>'+chartSVG(pts,ui.bsel,'bw')+'</div>'+addB;
  h+='<div class="stats"><div><span>Actuel</span><b class="num">'+fmt(last.v)+'</b></div><div><span>Moyenne</span><b class="num">'+fmt(pts.reduce(function(t,q){return t+q.v},0)/pts.length)+'</b></div><div><span>Évolution</span><b class="num">'+(pts.length>1?sg(Math.round((last.v-first.v)*10)/10)+' kg':'–')+'</b></div></div>';
  h+='<div class="shd"><h2>Détail</h2><span class="mute small">'+pts.length+' pesée'+(pts.length>1?'s':'')+'</span></div>';
- pts.slice().reverse().slice(0,12).forEach(function(q){h+='<div class="xl"><span class="t">'+dlabelY(q.ds)+'</span><span class="v num">'+fmt(q.v)+' kg</span></div>'});
+ pts.slice().reverse().slice(0,12).forEach(function(q){h+='<div class="xl" data-act="bwOpen" data-date="'+q.ds+'" style="cursor:pointer"><span class="t">'+dlabelY(q.ds)+'</span><span class="v num">'+fmt(q.v)+' kg</span></div>'});
  return h;
 }
 function dayView(){
@@ -1531,7 +1531,7 @@ function progressView(){
  h+='<div class="seg ptop">'+[['prog','Progression'],['det','Détail'],['bw','Poids']].filter(function(o){return !(ui.ro&&o[0]==='bw')}).map(function(o){return '<button data-act="ptop" data-v="'+o[0]+'" aria-pressed="'+((ui.ptop||'prog')===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
  if(ui.ro&&ui.ptop==='bw')ui.ptop='prog';
  if((ui.ptop||'prog')==='prog')return pgView(h);
- if(ui.ptop==='bw')return bwView(h+bwHome(new Date(),todayISO()));
+ if(ui.ptop==='bw')return bwView(h);
  h+='<div class="seg">'+[['ex','Exercices'],['mu','Muscles'],['vol','Volume']].map(function(m){return '<button data-act="pview" data-v="'+m[0]+'" aria-pressed="'+((ui.pv||'ex')===m[0])+'">'+m[1]+'</button>'}).join('')+'</div>';
  if(ui.pv==='vol')return volView(h);
  if(ui.pv==='mu')return muView(h);

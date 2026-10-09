@@ -76,6 +76,7 @@ html[data-ro]::after{content:'';position:fixed;inset:0;z-index:99999;pointer-eve
 .rob .rb svg{width:18px;height:18px}
 .shin{width:100%}
 .ptop{margin:0 0 12px}
+.seg.sm button{min-height:34px;padding:0 12px}
 .ch-zero{stroke:var(--mute);stroke-width:1;stroke-dasharray:4 4;opacity:.7}
 .ch-t0{fill:var(--fg);font-weight:700}
 .recap{margin-top:18px}
@@ -1403,25 +1404,78 @@ function pgSVG(pts,sel,an){
  });
  return s+'</svg>';
 }
+var pgRC=null;
+function pgReel(metric){
+ var days=pgDays(metric),ck=S.upd+'|'+JSON.stringify(S.set.hideMu||{});
+ if(pgRC&&pgRC.days===days&&pgRC.ck===ck)return pgRC.v;
+ var DAY=864e5,obs={},pos={},rp={},cnt={},lo=0,pts=[],y=null,yt=0;
+ days.forEach(function(D){Object.keys(D.obs).forEach(function(e){(obs[e]=obs[e]||[]).push({t:D.t,v:D.obs[e]})})});
+ Object.keys(obs).forEach(function(e){
+  var a=obs[e],rec=false,B=0,ss=a[0].t,si=0,i;
+  for(i=0;i<a.length;i++){
+   var o=a[i];
+   if(i>0&&a[i-1].t<=pgWinStart(o.t)){rec=false;ss=o.t;si=i;if(o.v<a[i-1].v){rec=true;B=a[i-1].v}}
+   if(rec&&o.v>=B)rec=false;
+   o.L=rec?B:o.v;o.rec=rec;o.ss=ss;o.si=si;
+  }
+  pos[e]=-1;rp[e]=-1;
+ });
+ for(var k=0;k<days.length;k++){
+  var D=days[k],t0=pgWinStart(D.t);
+  Object.keys(D.obs).forEach(function(e){cnt[e]=(cnt[e]||0)+1;pos[e]++});
+  while(lo<k&&days[lo].t<=t0){Object.keys(days[lo].obs).forEach(function(e){cnt[e]--});lo++}
+  var mn=pgMainsFrom(cnt),sw=0,sp=0,det=[];
+  mn.forEach(function(e){
+   var a=obs[e],c=a[pos[e]];if(!c)return;
+   while(rp[e]+1<=pos[e]&&a[rp[e]+1].t<=t0)rp[e]++;
+   var q0,q1,u,sm=0,nn=0,ref,cv;
+   if(rp[e]<0){q0=0;q1=Math.min(2,pos[e])}else{q0=Math.max(0,rp[e]-2);q1=rp[e]}
+   for(u=q0;u<=q1;u++){sm+=a[u].L;nn++}ref=sm/nn;
+   sm=0;nn=0;for(u=Math.max(c.si,pos[e]-2);u<=pos[e];u++){sm+=a[u].v;nn++}cv=sm/nn;
+   if(!(ref>0))return;
+   var pc=Math.max(-90,Math.min(100,(cv/ref-1)*100));
+   var age=(D.t-c.ss)/DAY,dl=(D.t-c.t)/DAY;
+   var w=Math.min(1,age/30)*(dl<=60?1:Math.max(0,(90-dl)/30));
+   det.push([e,pc,w,c.rec?1:0,cnt[e]]);sw+=w;sp+=w*pc;
+  });
+  if(sw<=0)continue;
+  var raw=sp/sw,a2;
+  if(y===null){y=raw;a2=0}else{var al=1-Math.exp(-Math.max(1,(D.t-yt)/DAY)/10);a2=al*(raw-y);y+=a2}
+  yt=D.t;
+  pts.push({d:new Date(D.t),ds:D.ds,pct:y,step:a2,n:det.length,det:det});
+ }
+ pgRC={days:days,ck:ck,v:pts};return pts;
+}
+function pgRealSeries(range,metric){
+ var lim=rangeLim(range),all=pgReel(metric),out=all.filter(function(p){return p.d.getTime()>=lim});
+ return out.length>1?out:[];
+}
 function pgView(h){
- var R=ui.pgr||'6m',M=ui.pgm||'e1rm';
- h+='<div class="seg" style="margin:0 0 8px">'+[['e1rm','1RM estimé'],['kg','Charge max'],['vol','Volume']].map(function(o){return '<button data-act="pgm" data-v="'+o[0]+'" aria-pressed="'+(M===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
- h+='<div class="seg" style="margin:0 0 14px">'+[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']].map(function(o){return '<button data-act="pgr" data-v="'+o[0]+'" aria-pressed="'+(R===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>';
- var pts=pgSeries(R,M);ui.pgPts=pts;
- if(!pts.length)return h+emptyHTML('chart','Pas encore de progression','La courbe compare tes charges d\'une séance à l\'autre sur tes exercices les plus utilisés par muscle. Il faut au moins deux séances avec le même exercice sur la période.');
+ var R=ui.pgr||'6m',M=ui.pgm||'e1rm',K=ui.pgk||'real';
+ function sgm(id,list,cur,act,mb){return '<div class="seg sm" style="margin:0 0 '+mb+'px">'+list.map(function(o){return '<button data-act="'+act+'" data-v="'+o[0]+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>'}).join('')+'</div>'}
+ h+=sgm('k',[['real','Réel'],['glob','Global']],K,'pgk',6);
+ h+=sgm('m',[['e1rm','1RM estimé'],['kg','Charge max'],['vol','Volume']],M,'pgm',6);
+ h+=sgm('r',[['3m','3 mois'],['6m','6 mois'],['y','Année'],['all','Tout']],R,'pgr',14);
+ var pts=K==='real'?pgRealSeries(R,M):pgSeries(R,M);ui.pgPts=pts;
+ if(!pts.length)return h+emptyHTML('chart','Pas encore de progression','La courbe compare tes charges sur tes exercices les plus utilisés par muscle. Il faut au moins deux séances avec le même exercice sur la période.');
  if(ui.pgsel!=null&&ui.pgsel>=pts.length)ui.pgsel=null;
- var sel=ui.pgsel,last=pts[pts.length-1],cur=sel!=null?pts[sel]:last;
+ var sel=ui.pgsel,last=pts[pts.length-1],cur=sel!=null?pts[sel]:last,real=K==='real';
  function sg(v){return (v>0?'+':'')+(Math.abs(v)>=100?String(Math.round(v)):fmt(v))+' %'}
+ function sgp(v){return (v>0?'+':'')+fmt(v)+' pt'}
  var cls=function(v){return v>0.05?'up':v<-0.05?'dn':''};
- var left=sel==null?'Sur la période':cur.base?'Début de période':dlabelY(cur.ds);
- var right=sel==null?'Touche un point<br>de la courbe':cur.base?'':'ce jour<br><b class="'+cls(cur.step)+'">'+sg(cur.step)+'</b>';
- var ck='pg|'+R+'|'+M+'|'+pts.length,an=ck!==lastChartKey;lastChartKey=ck;
+ var left=sel==null?(real?'Actuellement':'Sur la période'):cur.base?'Début de période':dlabelY(cur.ds);
+ var right=sel==null?'Touche un point<br>de la courbe':cur.base?'':'ce jour<br><b class="'+cls(cur.step)+'">'+(real?sgp(cur.step):sg(cur.step))+'</b>';
+ var ck='pg|'+K+'|'+R+'|'+M+'|'+pts.length,an=ck!==lastChartKey;lastChartKey=ck;
+ ui.pgDets={};pts.forEach(function(q){if(q.det)ui.pgDets[q.ds]=q.det});
  h+='<div class="cardc"><div class="read"><div><span>'+left+'</span><br><b class="num">'+sg(cur.pct)+'</b></div><span class="num" style="text-align:right">'+right+'</span></div>'+
   (sel!=null&&!cur.base?'<div style="padding:0 8px 4px"><button class="pill" style="display:inline-flex;align-items:center;gap:7px" data-act="pgMain" data-ds="'+cur.ds+'">'+svg('prog',16)+' Exercices principaux</button></div>':'')+
   pgSVG(pts,sel,an)+'</div>';
  var mx=pts[0],mn=pts[0];pts.forEach(function(q){if(q.pct>mx.pct)mx=q;if(q.pct<mn.pct)mn=q});
- h+='<div class="stats"><div><span>Total</span><b class="num '+cls(last.pct)+'">'+sg(last.pct)+'</b></div><div><span>Pic</span><b class="num">'+sg(mx.pct)+'</b></div><div><span>Creux</span><b class="num">'+sg(mn.pct)+'</b></div></div>';
- h+='<p class="mute small" style="margin:10px 0 0">Moyenne des progressions d\'une séance à l\'autre sur tes 2 exercices les plus utilisés par muscle (3 derniers mois glissants, '+(M==='kg'?'charge max':M==='vol'?'volume par exercice : charge × reps':'1RM estimé')+'). Base 0 % au début de la période. Les exercices principaux peuvent changer au fil du temps.</p>';
+ h+='<div class="stats"><div><span>'+(real?'Actuel':'Total')+'</span><b class="num '+cls(last.pct)+'">'+sg(last.pct)+'</b></div><div><span>Pic</span><b class="num">'+sg(mx.pct)+'</b></div><div><span>Creux</span><b class="num">'+sg(mn.pct)+'</b></div></div>';
+ var mt=M==='kg'?'charge max':M==='vol'?'volume par exercice : charge × reps':'1RM estimé';
+ h+='<p class="mute small" style="margin:10px 0 0">'+(real
+  ?'Où tu en es à chaque date : chaque exercice principal (2 par muscle) est comparé à lui-même il y a 3 mois ('+mt+'). 0 % = tu stagnes, au-dessus tu progresses, en dessous tu régresses. Un exercice arrêté depuis plus de 2 mois sort peu à peu de la moyenne ; à la reprise, il est comparé à son dernier niveau d\'avant la pause et rejoint la courbe progressivement.'
+  :'Cumul des progressions d\'une séance à l\'autre sur tes 2 exercices les plus utilisés par muscle (3 derniers mois glissants, '+mt+'). Base 0 % au début de la période. Les exercices principaux peuvent changer au fil du temps.')+'</p>';
  return h;
 }
 function progressView(){
@@ -1646,8 +1700,9 @@ function sheetHTML(){
    '<button class="btn" data-act="closeSheet">OK</button></div></div></div>';
  }
  if(s.name==='pgmain'){
-  var ms=pgMainsAt(s.date,ui.pgm||'e1rm'),cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.</p>';
-  ms.forEach(function(q){if(q.mus!==cur2){cur2=q.mus;hh+='<div class="month">'+MUS[q.mus].n+'</div>'}hh+='<div class="xl"><span class="t">'+mdot(q.ex)+' '+esc(exName(q.ex))+'<span class="mute" style="display:block;font-size:13px;margin-left:18px">'+q.n+' séance'+(q.n>1?'s':'')+' sur 3 mois</span></span><span class="v num '+(q.pct==null?'':q.pct>0.05?'up':q.pct<-0.05?'dn':'')+'">'+(q.pct==null?'–':(q.pct>0?'+':'')+fmt(q.pct)+' %')+'</span></div>'});
+  var real2=(ui.pgk||'real')==='real',cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">'+(real2?'Pris en compte au '+dlabelY(s.date)+' : chaque exercice est comparé à lui-même il y a 3 mois.':'Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.')+'</p>';
+  var ms=real2?(ui.pgDets&&ui.pgDets[s.date]||[]).map(function(q){return {ex:q[0],mus:musOf(q[0]),n:q[4],pct:q[1],rec:q[3],w:q[2]}}):pgMainsAt(s.date,ui.pgm||'e1rm');
+  ms.forEach(function(q){if(q.mus!==cur2){cur2=q.mus;hh+='<div class="month">'+MUS[q.mus].n+'</div>'}hh+='<div class="xl"><span class="t">'+mdot(q.ex)+' '+esc(exName(q.ex))+'<span class="mute" style="display:block;font-size:13px;margin-left:18px">'+q.n+' séance'+(q.n>1?'s':'')+' sur 3 mois'+(q.rec?' · en reprise':'')+(real2&&q.w<0.99?' · intégré progressivement':'')+'</span></span><span class="v num '+(q.pct==null?'':q.pct>0.05?'up':q.pct<-0.05?'dn':'')+'">'+(q.pct==null?'–':(q.pct>0?'+':'')+fmt(q.pct)+' %')+'</span></div>'});
   if(!ms.length)hh+='<p class="mute">Aucun exercice avec charge sur cette période.</p>';
   return hh+'</div></div></div>';
  }
@@ -1940,6 +1995,7 @@ var A={
  ptop:function(b){ui.ptop=b.dataset.v;ui.pgsel=null;render()},
  pgr:function(b){ui.pgr=b.dataset.v;ui.pgsel=null;render()},
  pgm:function(b){ui.pgm=b.dataset.v;ui.pgsel=null;render()},
+ pgk:function(b){ui.pgk=b.dataset.v;ui.pgsel=null;render()},
  pgMain:function(b){ui.sheet={name:'pgmain',date:b.dataset.ds};render()},
  bwr:function(b){ui.bwr=b.dataset.v;ui.bsel=null;render()},
  vrng:function(b){ui.vr=b.dataset.v;ui.vsel=null;render()},
@@ -2100,7 +2156,7 @@ app.addEventListener('click',function(e){
  if(f&&ui.ro&&!ROK[b.dataset.act]){toast('Profil en lecture seule');return}
  if(f)f(b,e);
 });
-var ROK={ptop:1,pgr:1,pgm:1,pgMain:1,tab:1,closeSheet:1,dayOpen:1,dayBack:1,calToggle:1,calPrev:1,calNext:1,calNow:1,wkPrev:1,wkNext:1,wkNow:1,dayPrev:1,dayNext:1,closeModal:1,pview:1,vrng:1,vmet:1,exOpen:1,pxPick:1,pxcat:1,pm:1,pr:1,muPrev:1,muNext:1,mper:1,muNow:1,muOpen:1,sessOpen:1,sessBack:1,sessShare:1,profSw:1,shRefresh:1};
+var ROK={ptop:1,pgr:1,pgm:1,pgk:1,pgMain:1,tab:1,closeSheet:1,dayOpen:1,dayBack:1,calToggle:1,calPrev:1,calNext:1,calNow:1,wkPrev:1,wkNext:1,wkNow:1,dayPrev:1,dayNext:1,closeModal:1,pview:1,vrng:1,vmet:1,exOpen:1,pxPick:1,pxcat:1,pm:1,pr:1,muPrev:1,muNext:1,mper:1,muNow:1,muOpen:1,sessOpen:1,sessBack:1,sessShare:1,profSw:1,shRefresh:1};
 var ROI={pxq:1,px:1};
 var I={
  xrest:function(t){var l=S.lib[ui.sheet.ex];if(!l)return;var v=Math.round(num(t.value));if(v>=10&&v<=900)l.rest=v;else delete l.rest;dirtyCfg()},

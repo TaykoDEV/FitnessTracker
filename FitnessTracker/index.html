@@ -7,6 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
+<meta name="build" content="6aca43a4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fitness Tracker">
@@ -534,6 +535,15 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
  .colin{overflow:hidden;animation:colin .32s cubic-bezier(.2,.8,.2,1) both}
  @keyframes colin{from{max-height:var(--h0)}to{max-height:var(--h1)}}
 }
+.updbar{position:fixed;z-index:200;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);display:flex;align-items:stretch;border-radius:16px;background:var(--acc);color:#1a1209;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:updin .35s cubic-bezier(.2,.9,.3,1.2)}
+.updbar button{all:unset;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.updbar .ub-go{flex:1;display:flex;align-items:center;gap:12px;padding:11px 8px 11px 14px;min-width:0}
+.updbar .ub-go span{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.updbar .ub-go b{font:700 16px var(--head,'Barlow Condensed',sans-serif);letter-spacing:.02em}
+.updbar .ub-go small{font:500 12.5px var(--body,Barlow,sans-serif);opacity:.8}
+.updbar .ub-x{padding:0 15px;font-size:15px;opacity:.7;display:flex;align-items:center}
+@keyframes updin{from{transform:translateY(-130%);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.updbar{animation:none}}
 #toasts{position:fixed;left:16px;right:16px;bottom:84px;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:20}
 .toast{background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:16px;max-width:520px;text-align:center}
 @media (prefers-reduced-motion:no-preference){.toast{animation:tin .18s ease-out}@keyframes tin{from{opacity:0;transform:translateY(6px)}}}
@@ -1586,6 +1596,7 @@ function settingsView(){
  h+='<div class="shd"><h2>Sauvegarde</h2></div><div class="card"><p class="mute small" style="margin:0">Tes données restent sur ce téléphone. Exporte un fichier de temps en temps pour ne rien perdre, ou pour changer de téléphone.</p><div class="row2"><button class="btn soft" data-act="exportData">Exporter</button><label class="btn soft" for="imp" style="cursor:pointer">Importer</label></div><input type="file" id="imp" accept="application/json,.json" data-f="imp" hidden></div>';
  h+=gUI();
  h+=shSec();
+ h+=netUI();
  h+='<div class="card" style="margin-top:10px"><div><b>Retour haptique</b><div class="mute small">Petite vibration quand tu coches une série ou bats un record</div></div><div class="seg"><button data-act="setOpt" data-k="hap" data-v="1" aria-pressed="'+(S.set.hap!==false)+'">Oui</button><button data-act="setOpt" data-k="hap" data-v="0" aria-pressed="'+(S.set.hap===false)+'">Non</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Repère de séries par muscle</b><div class="mute small">Zone grisée des barres dans Progrès &gt; Muscles</div></div><div class="seg"><button data-act="volSet" data-v="low" aria-pressed="'+(S.set.vol!=='std')+'">Faible volume · 6–10</button><button data-act="volSet" data-v="std" aria-pressed="'+(S.set.vol==='std')+'">Standard · 10–20</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Muscles suivis sur l\'accueil</b><div class="mute small">Bloc « Dernier travail » : masque ceux que tu ne travailles pas</div></div><div class="seg">'+Object.keys(MUS).filter(function(m){return m!=='autre'}).map(function(m){return '<button data-act="muHide" data-m="'+m+'" aria-pressed="'+!(S.set.hideMu||{})[m]+'"><i class="mdot" style="background:'+mcol(m)+';margin-right:6px"></i>'+MUS[m].n+'</button>'}).join('')+'</div></div>';
@@ -2306,9 +2317,28 @@ var _commit=commit;
 function gCool(){return !!(gSt.fail&&Date.now()-gSt.fail<864e5)}
 try{if(navigator.storage&&navigator.storage.persisted)navigator.storage.persisted().then(function(v){gPers=v?1:0;if(ui.tab==='set'&&ui.route.name==='main')render()})}catch(e){}
 
+
+/* --- garde-fou + journal des requêtes Google --- */
+var gLog=(function(){try{return JSON.parse(localStorage.getItem('ft.netlog')||'[]')||[]}catch(e){return []}})(),gBlk=0;
+function gNetSave(){try{localStorage.setItem('ft.netlog',JSON.stringify(gLog.slice(-40)))}catch(e){}}
+function gNet(tag){
+ var now=Date.now(),n=0,i;for(i=0;i<gLog.length;i++)if(now-gLog[i][0]<60000)n++;
+ if(n>=10){gBlk++;return null}
+ var e=[now,tag,'…'];gLog.push(e);if(gLog.length>40)gLog.shift();gNetSave();return e;
+}
+function gFetch(tag,url,init){
+ var e=gNet(tag);if(!e)return Promise.reject({error:'busy'});
+ return fetch(url,init).then(function(r){e[2]=r.status;gNetSave();return r},function(x){e[2]='ko';gNetSave();throw x});
+}
+function netUI(){
+ if(!gLog.length)return '';
+ var now=Date.now(),n=0,i,rows='';for(i=0;i<gLog.length;i++)if(now-gLog[i][0]<60000)n++;
+ for(i=gLog.length-1;i>=Math.max(0,gLog.length-12);i--){var e=gLog[i],t=new Date(e[0]);rows+='<div>'+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2)+' · '+esc(e[1])+' · '+esc(String(e[2]))+'</div>'}
+ return '<div class="shd"><h2>Requêtes Google</h2></div><div class="card"><div class="mute small">Dernière minute : '+n+(gBlk?' · '+gBlk+' bloquée'+(gBlk>1?'s':'')+' (limite 10/min)':'')+'. Si ce chiffre reste très haut, envoie-moi une capture.</div><div class="mute small" style="margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.5">'+rows+'</div></div>';
+}
 function gLoad(cb){
  if(window.google&&google.accounts&&google.accounts.oauth2)return cb(true);
- var sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;
+ var sc=document.createElement('script');if(!gNet('gsi-script'))return cb(false);sc.src='https://accounts.google.com/gsi/client';sc.async=true;
  sc.onload=function(){cb(!!(window.google&&google.accounts&&google.accounts.oauth2))};sc.onerror=function(){cb(false)};
  document.head.appendChild(sc);
 }
@@ -2321,13 +2351,13 @@ function gToken(prompt){
     callback:function(r){if(gCb)gCb(r)},error_callback:function(e){if(gEb)gEb(e)}});
    gCb=function(r){if(r&&r.access_token){gTok=r.access_token;gExp=Date.now()+(r.expires_in||3600)*1000;res(gTok)}else rej(r||{error:'denied'})};
    gEb=function(e){rej(e||{error:'popup'})};
-   try{gClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
+   if(!gNet('jeton sauvegarde'))return rej({error:'busy'});try{gClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
   });
  });
 }
 function gApi(url,init){
  init=init||{};init.headers=Object.assign({Authorization:'Bearer '+gTok},init.headers||{});
- return fetch(url,init).then(function(r){if(r.status===401)gTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
+ return gFetch('drive '+(init.method||'GET'),url,init).then(function(r){if(r.status===401)gTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
 }
 function gFind(){
  return gApi('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GFILE+"'")+'&fields=files(id,modifiedTime)')
@@ -2413,13 +2443,13 @@ function shToken(prompt){
     callback:function(r){if(sCb)sCb(r)},error_callback:function(e){if(sEb)sEb(e)}});
    sCb=function(r){if(r&&r.access_token){sTok=r.access_token;sExp=Date.now()+(r.expires_in||3600)*1000;res(sTok)}else rej(r||{error:'denied'})};
    sEb=function(e){rej(e||{error:'popup'})};
-   try{sClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
+   if(!gNet('jeton partage'))return rej({error:'busy'});try{sClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
   });
  });
 }
 function shApi(url,init){
  init=init||{};init.headers=Object.assign({Authorization:'Bearer '+sTok},init.headers||{});
- return fetch(url,init).then(function(r){if(r.status===401)sTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
+ return gFetch('partage '+(init.method||'GET'),url,init).then(function(r){if(r.status===401)sTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
 }
 function shPayload(){
  var c=JSON.parse(JSON.stringify(S));c.active=null;c.bw=[];c.set={};
@@ -2434,16 +2464,18 @@ function shCreate(body){
  });
 }
 function shUpdate(body){return shApi('https://www.googleapis.com/upload/drive/v3/files/'+shSt.id+'?uploadType=media&fields=id',{method:'PATCH',headers:{'Content-Type':'application/json'},body:body})}
+function shBack(n){return Math.min(3e5*Math.pow(2,Math.max(0,(n||1)-1)),216e5)}
 function shPush(interactive){
  if(!shSt.on||shBusy||ui.ro||!shAvail())return Promise.resolve('skip');
+ if(!interactive&&shSt.failAt&&Date.now()-shSt.failAt<shBack(shSt.failN))return Promise.resolve('skip');
  shBusy=true;shSt.err='';shRef();
  var body=shPayload();
  return shToken(interactive?'':'none').then(function(){
   if(!shSt.id)return shCreate(body);
   return shUpdate(body).then(function(){return {id:shSt.id,resourceKey:shSt.rk}},function(e){if(e&&e.error==='http404'){shSt.id=null;return shCreate(body)}throw e});
  }).then(function(f){
-  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.pend=false;shSt.err='';shBusy=false;shSave();shRef();return 'ok';
- }).catch(function(e){shBusy=false;shSt.err=shErr(e);shSave();shRef();return 'err'});
+  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
+ }).catch(function(e){shBusy=false;shSt.err=shErr(e);shSt.failAt=Date.now();shSt.failN=Math.min((shSt.failN||0)+1,8);shSave();shRef();return 'err'});
 }
 var _slShare=saveLocal;
 saveLocal=function(){_slShare();if(shSt.on&&!ui.ro){shSt.pend=true;shSave();clearTimeout(shT);shT=setTimeout(function(){shPush(false)},25000)}};
@@ -2453,32 +2485,36 @@ document.addEventListener('visibilitychange',function(){if(document.visibilitySt
 
 /* --- lien / code --- */
 function shCode(){return shSt.id?shSt.id+'.'+(shSt.rk||'0')+'.'+(shKey()||'0'):''}
-function shUrl(){return location.origin+location.pathname+'#partage='+shCode()}
+function shUrl(){return location.origin+location.pathname+'#partage='+shCode()+(shP?'':'&re=1')}
 function shParse(t){
+ var t0=t;
  t=String(t||'').trim();var m=t.match(/partage=([^&\s#]+)/);if(m)t=decodeURIComponent(m[1]);
  var a=t.split('.');if(a.length<3||!/^[\w-]{10,}$/.test(a[0]))return null;
- return {id:a[0],rk:a[1]==='0'?'':a[1],key:a[2]==='0'?'':a[2]};
+ var re=/[#&?]re=1/.test(String(t0||''));
+ return {id:a[0],rk:a[1]==='0'?'':a[1],key:a[2]==='0'?'':a[2],re:re};
 }
 function shFetch(P){
  var k=P.key||shKey();if(!k)return Promise.reject({error:'nokey'});
  var url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(P.id)+'?alt=media&key='+encodeURIComponent(k);
- function go(h){return fetch(url,h?{headers:{'X-Goog-Drive-Resource-Keys':P.id+'/'+P.rk}}:{}).then(function(r){if(!r.ok)throw {error:'http'+r.status};return r.json()})}
+ function go(h){return gFetch('profil lié',url,h?{headers:{'X-Goog-Drive-Resource-Keys':P.id+'/'+P.rk}}:{}).then(function(r){if(!r.ok)throw {error:'http'+r.status};return r.json()})}
  return go(false).catch(function(e){if(e&&e.error&&P.rk&&(e.error==='http404'||e.error==='http403'))return go(true);throw e})
   .catch(function(e){throw (e&&e.error)?e:{error:'offline'}})
   .then(function(j){if(!j||j.app!=='fitness-tracker-share'||!j.S||!Array.isArray(j.SESS))throw {error:'format'};return j});
 }
 function shMsg(e){var c=e&&e.error;return c==='offline'?'Hors ligne':c==='nokey'?'Clé API Google manquante (voir Réglages > Partage)':c==='format'?'Ce lien ne correspond pas à un profil':(c==='http404'||c==='http403')?'Lien invalide ou partage arrêté':'Impossible de charger le profil'}
 function shStore(P,j){shPrep=null;shStat={};shP={id:P.id,rk:P.rk,key:P.key||shKey(),name:(j.name||'').trim()||'Profil',acc:j.acc||null,at:j.at||0,fetched:Date.now(),data:{S:j.S,SESS:j.SESS}};shPSave();setTimeout(shPrepare,80)}
-function shLinkDo(text){
+function shLinkDo(text,re0){
  var P=shParse(text);if(!P){toast('Lien non reconnu');return Promise.resolve()}
  if(shSt.id&&P.id===shSt.id){toast('C\'est ton propre lien');return Promise.resolve()}
  shLoading=true;toast('Chargement du profil…');
- return shFetch(P).then(function(j){shLoading=false;if(ui.ro)roExit();shStore(P,j);render();toast('Profil de '+shP.name+' lié')}).catch(function(e){shLoading=false;toast(shMsg(e))});
+ return shFetch(P).then(function(j){shLoading=false;if(ui.ro)roExit();shStore(P,j);render();toast('Profil de '+shP.name+' lié');if((P.re||re0)&&shSt.on&&shSt.id)setTimeout(function(){ui.modal={title:'Lui renvoyer ton lien ?',text:shP.name+' ne voit pas encore tes séances. Envoie-lui ton lien : il lui suffira de l\'ouvrir et d\'accepter.',btns:[{act:'shSend',label:'Envoyer mon lien'},{act:'closeModal',label:'Plus tard',line:true}]};render()},900)}).catch(function(e){shLoading=false;toast(shMsg(e))});
 }
+var shTry=0,shFailAt=0,shFailN=0;
 function shRefreshP(manual){
  if(!shP||shP.demo||shLoading)return Promise.resolve();
- shLoading=true;
- return shFetch(shP).then(function(j){shLoading=false;if(j.at&&j.at===shP.at){shP.fetched=Date.now();if(manual)toast('Profil à jour');return}shStore(shP,j);if(ui.ro){roLoad();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;if(manual)toast(shMsg(e))});
+ if(!manual&&(Date.now()-shTry<6e4||(shFailAt&&Date.now()-shFailAt<shBack(shFailN))))return Promise.resolve();
+ shTry=Date.now();shLoading=true;
+ return shFetch(shP).then(function(j){shLoading=false;shFailAt=0;shFailN=0;if(j.at&&j.at===shP.at){shP.fetched=Date.now();if(manual)toast('Profil à jour');return}shStore(shP,j);if(ui.ro){roLoad();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;shFailAt=Date.now();shFailN=Math.min(shFailN+1,8);if(manual)toast(shMsg(e))});
 }
 
 /* --- bascule de profil --- */
@@ -2590,7 +2626,7 @@ A.shOffOk=function(){
  shToken('').then(function(){return shApi('https://www.googleapis.com/drive/v3/files/'+id,{method:'DELETE'})}).then(function(){done(true)},function(){done(false)});
 };
 A.shLink=function(){var el=document.getElementById('shin');shLinkDo(el?el.value:'')};
-A.shLinkOk=function(){var c=ui.shIn;ui.shIn=null;ui.modal=null;render();if(c)shLinkDo(shUrlFrom(c))};
+A.shLinkOk=function(){var c=ui.shIn;ui.shIn=null;ui.modal=null;render();if(c)shLinkDo(shUrlFrom(c),c.re)};
 function shUrlFrom(c){return c.id+'.'+(c.rk||'0')+'.'+(c.key||'0')}
 A.shUnlink=function(){ui.modal={title:'Délier ce profil ?',text:'Tu ne verras plus les données de '+(shP?shP.name:'')+'. Elle pourra te renvoyer son lien plus tard.',btns:[{act:'shUnlinkOk',label:'Délier',danger:true},{act:'closeModal',label:'Annuler',line:true}]};render()};
 A.shUnlinkOk=function(){ui.modal=null;if(ui.ro)roExit();shP=null;shPrep=null;shStat={};shPSave();render();toast('Profil délié')};
@@ -2682,6 +2718,38 @@ function recapHTML(){
 setTimeout(shPrepare,700);
 setTimeout(function(){if(shP&&!shP.demo&&navigator.onLine!==false&&Date.now()-(shP.fetched||0)>600000)shRefreshP(false)},1800);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&shP&&!shP.demo&&Date.now()-(shP.fetched||0)>600000)setTimeout(function(){shRefreshP(false)},1500)});
+
+/* --- bannière de mise à jour --- */
+(function(){
+ var meta=document.querySelector('meta[name="build"]'),MY=meta?meta.getAttribute('content'):'',last=0,newHTML=null,bar=null,dismissed=false;
+ if(!MY)return;
+ function show(){
+  if(bar||dismissed)return;
+  bar=document.createElement('div');bar.className='updbar';bar.setAttribute('role','status');
+  bar.innerHTML='<button class="ub-go" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg><span><b>Mise à jour disponible</b><small>Touche pour installer</small></span></button><button class="ub-x" type="button" aria-label="Plus tard">✕</button>';
+  bar.querySelector('.ub-go').onclick=go;
+  bar.querySelector('.ub-x').onclick=function(){dismissed=true;if(bar){bar.remove();bar=null}};
+  document.body.appendChild(bar);
+ }
+ function go(){
+  if(ui.route&&ui.route.name==='logger'){toast('Termine ta séance d\'abord');return}
+  var done=function(){location.reload()};
+  if(!window.caches)return done();
+  caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.open(k).then(function(c){return c.keys().then(function(rs){return Promise.all(rs.filter(function(r){var u=new URL(r.url);return u.origin===location.origin&&(u.pathname===location.pathname||/\/$|index\.html$/.test(u.pathname))}).map(function(r){return newHTML?c.put(r,new Response(newHTML,{headers:{'Content-Type':'text/html; charset=utf-8'}})):c.delete(r)}))})})}))}).then(done,done);
+ }
+ function check(force){
+  if(navigator.onLine===false||(!force&&Date.now()-last<20*60e3))return;
+  last=Date.now();
+  var u=location.pathname+'?chk='+Date.now();
+  fetch(u,{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){
+   setTimeout(function(){try{caches.keys().then(function(ks){ks.forEach(function(k){caches.open(k).then(function(c){c.delete(u)})})})}catch(e){}},4000);
+   var m=t&&t.match(/<meta name="build" content="([^"]+)"/);
+   if(m&&m[1]!==MY){newHTML=t;show()}
+  }).catch(function(){});
+ }
+ setTimeout(function(){check(true)},3500);
+ document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(check,1500)});
+})();
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 render();

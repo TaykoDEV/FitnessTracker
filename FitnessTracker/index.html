@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6aca43a4">
+<meta name="build" content="6aca47d8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fitness Tracker">
@@ -2300,7 +2300,12 @@ app.addEventListener('change',function(e){var f=e.target.dataset&&e.target.datas
 /* ---------- sauvegarde Google Drive (dossier caché de l'app) ---------- */
 var GCID='758884703149-6rpnm1smstbv81lc202gqam8or7u349h.apps.googleusercontent.com',GK='ft.gdrive',GFILE='fitness-tracker-backup.json';
 var gSt=(function(){try{return JSON.parse(localStorage.getItem(GK)||'{}')||{}}catch(e){return {}}})();
-var gTok=null,gExp=0,gBusy=false,gNeed=false,gClient=null,gErr='',gCb=null,gEb=null,gPers=null;
+var _gt=null,gTok=null,gExp=0,gBusy=false,gNeed=false,gClient=null,gErr='',gCb=null,gEb=null,gPers=null;
+_gt=tkLoad('ft.gtok');if(_gt){gTok=_gt.t;gExp=_gt.e}
+
+function tkLoad(k){try{var o=JSON.parse(localStorage.getItem(k)||'null');if(o&&o.t&&o.e>Date.now()+60000)return o}catch(e){}return null}
+function tkSave(k,t,e){try{localStorage.setItem(k,JSON.stringify({t:t,e:e}))}catch(x){}}
+function tkDrop(k){try{localStorage.removeItem(k)}catch(e){}}
 function gSave(){try{localStorage.setItem(GK,JSON.stringify(gSt))}catch(e){}}
 function gOn(){return !!(gSt.on&&GCID&&GCID.indexOf('__')!==0)}
 function gAgo(t){var m=Math.round((Date.now()-t)/60000);if(m<1)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';return 'il y a '+Math.round(h/24)+' j'}
@@ -2349,7 +2354,7 @@ function gToken(prompt){
    if(!ok)return rej({error:'offline'});
    if(!gClient)gClient=google.accounts.oauth2.initTokenClient({client_id:GCID,scope:'https://www.googleapis.com/auth/drive.appdata',
     callback:function(r){if(gCb)gCb(r)},error_callback:function(e){if(gEb)gEb(e)}});
-   gCb=function(r){if(r&&r.access_token){gTok=r.access_token;gExp=Date.now()+(r.expires_in||3600)*1000;res(gTok)}else rej(r||{error:'denied'})};
+   gCb=function(r){if(r&&r.access_token){gTok=r.access_token;gExp=Date.now()+(r.expires_in||3600)*1000;tkSave('ft.gtok',gTok,gExp);res(gTok)}else rej(r||{error:'denied'})};
    gEb=function(e){rej(e||{error:'popup'})};
    if(!gNet('jeton sauvegarde'))return rej({error:'busy'});try{gClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
   });
@@ -2357,7 +2362,7 @@ function gToken(prompt){
 }
 function gApi(url,init){
  init=init||{};init.headers=Object.assign({Authorization:'Bearer '+gTok},init.headers||{});
- return gFetch('drive '+(init.method||'GET'),url,init).then(function(r){if(r.status===401)gTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
+ return gFetch('drive '+(init.method||'GET'),url,init).then(function(r){if(r.status===401){gTok=null;tkDrop('ft.gtok')}if(!r.ok)throw {error:'http'+r.status};return r});
 }
 function gFind(){
  return gApi('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GFILE+"'")+'&fields=files(id,modifiedTime)')
@@ -2424,7 +2429,9 @@ function gUI(){
 var SKEY='__GKEY__',SHK='ft.share',SHP='ft.partner',SHF='fitness-tracker-partage.json';
 var shSt=(function(){try{return JSON.parse(localStorage.getItem(SHK)||'{}')||{}}catch(e){return {}}})();
 var shP=(function(){try{return JSON.parse(localStorage.getItem(SHP)||'null')}catch(e){return null}})();
+var _st=tkLoad('ft.stok');
 var OWN=null,shBusy=false,shT=0,sTok=null,sExp=0,sClient=null,sCb=null,sEb=null,shLoading=false;
+if(_st){sTok=_st.t;sExp=_st.e}
 function shSave(){try{localStorage.setItem(SHK,JSON.stringify(shSt))}catch(e){}}
 function shPSave(){try{if(shP)localStorage.setItem(SHP,JSON.stringify(shP));else localStorage.removeItem(SHP)}catch(e){}}
 function shAvail(){return !!(GCID&&GCID.indexOf('__')!==0)}
@@ -2441,7 +2448,7 @@ function shToken(prompt){
    if(!ok)return rej({error:'offline'});
    if(!sClient)sClient=google.accounts.oauth2.initTokenClient({client_id:GCID,scope:'https://www.googleapis.com/auth/drive.file',
     callback:function(r){if(sCb)sCb(r)},error_callback:function(e){if(sEb)sEb(e)}});
-   sCb=function(r){if(r&&r.access_token){sTok=r.access_token;sExp=Date.now()+(r.expires_in||3600)*1000;res(sTok)}else rej(r||{error:'denied'})};
+   sCb=function(r){if(r&&r.access_token){sTok=r.access_token;sExp=Date.now()+(r.expires_in||3600)*1000;tkSave('ft.stok',sTok,sExp);res(sTok)}else rej(r||{error:'denied'})};
    sEb=function(e){rej(e||{error:'popup'})};
    if(!gNet('jeton partage'))return rej({error:'busy'});try{sClient.requestAccessToken({prompt:prompt})}catch(e){rej(e)}
   });
@@ -2449,12 +2456,14 @@ function shToken(prompt){
 }
 function shApi(url,init){
  init=init||{};init.headers=Object.assign({Authorization:'Bearer '+sTok},init.headers||{});
- return gFetch('partage '+(init.method||'GET'),url,init).then(function(r){if(r.status===401)sTok=null;if(!r.ok)throw {error:'http'+r.status};return r});
+ return gFetch('partage '+(init.method||'GET'),url,init).then(function(r){if(r.status===401){sTok=null;tkDrop('ft.stok')}if(!r.ok)throw {error:'http'+r.status};return r});
 }
-function shPayload(){
+function shBody(){
  var c=JSON.parse(JSON.stringify(S));c.active=null;c.bw=[];c.set={};
- return JSON.stringify({app:'fitness-tracker-share',v:1,at:Date.now(),name:(S.set.name||'').trim(),acc:S.set.acc||'orange',S:c,SESS:SESS});
+ return {app:'fitness-tracker-share',v:1,name:(S.set.name||'').trim(),acc:S.set.acc||'orange',S:c,SESS:SESS};
 }
+function shHashOf(o){var t=JSON.stringify(o),h=5381,i;for(i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return t.length+'.'+h}
+function shPayload(){var o=shBody();o.at=Date.now();return JSON.stringify(o)}
 function shCreate(body){
  var bd='fts'+uid(),meta=JSON.stringify({name:SHF,mimeType:'application/json'});
  return shApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,resourceKey',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+bd},
@@ -2465,21 +2474,30 @@ function shCreate(body){
 }
 function shUpdate(body){return shApi('https://www.googleapis.com/upload/drive/v3/files/'+shSt.id+'?uploadType=media&fields=id',{method:'PATCH',headers:{'Content-Type':'application/json'},body:body})}
 function shBack(n){return Math.min(3e5*Math.pow(2,Math.max(0,(n||1)-1)),216e5)}
-function shPush(interactive){
+/* mode : true = bouton manuel · 'fin' = fin de séance (1 essai) · sinon automatique (1×/jour) */
+function shPush(mode){
+ var interactive=mode===true;
  if(!shSt.on||shBusy||ui.ro||!shAvail())return Promise.resolve('skip');
- if(!interactive&&shSt.failAt&&Date.now()-shSt.failAt<shBack(shSt.failN))return Promise.resolve('skip');
+ if(!interactive&&mode!=='fin'&&shSt.failAt&&Date.now()-shSt.failAt<shBack(shSt.failN))return Promise.resolve('skip');
+ var hh=shHashOf(shBody());
+ if(!interactive&&hh===shSt.hash){shSt.chk=Date.now();shSave();return Promise.resolve('skip')}
  shBusy=true;shSt.err='';shRef();
  var body=shPayload();
  return shToken(interactive?'':'none').then(function(){
   if(!shSt.id)return shCreate(body);
   return shUpdate(body).then(function(){return {id:shSt.id,resourceKey:shSt.rk}},function(e){if(e&&e.error==='http404'){shSt.id=null;return shCreate(body)}throw e});
  }).then(function(f){
-  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
+  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.chk=shSt.last;shSt.hash=hh;shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
  }).catch(function(e){shBusy=false;shSt.err=shErr(e);shSt.failAt=Date.now();shSt.failN=Math.min((shSt.failN||0)+1,8);shSave();shRef();return 'err'});
 }
-var _slShare=saveLocal;
-saveLocal=function(){_slShare();if(shSt.on&&!ui.ro){shSt.pend=true;shSave();clearTimeout(shT);shT=setTimeout(function(){shPush(false)},25000)}};
-function shBoot(){if(shSt.on&&shSt.pend&&!ui.ro&&ui.route.name!=='logger'&&!shBusy)shPush(false)}
+function shBoot(){
+ if(!shSt.on||ui.ro||shBusy||S.active||(ui.route&&ui.route.name==='logger'))return;
+ if(Date.now()-Math.max(shSt.last||0,shSt.chk||0)<864e5)return;
+ shPush(false);
+}
+/* fin de séance : un seul essai de partage */
+var _cmShare=commit;
+commit=function(k){var was=ui.curKind==='active';_cmShare(k);if(was&&!ui.cur&&shSt.on&&!ui.ro)setTimeout(function(){shPush('fin')},700)};
 setTimeout(shBoot,4000);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(shBoot,1200)});
 
@@ -2638,7 +2656,7 @@ function shUI(){
  if(!shSt.on){
   h+='<div class="card" style="margin-top:10px"><div><b>Partager mes données</b><div class="mute small">Crée un lien secret en lecture seule : la personne qui le reçoit voit tes séances et ta progression, sans rien pouvoir modifier. Ton poids n\'est pas partagé. Tu peux arrêter à tout moment.</div></div><button class="btn" data-act="shOn">Activer le partage</button></div>';
  }else{
-  var st=shBusy?'Mise à jour…':shSt.err?'⚠ '+shSt.err+'. Appuie sur « Mettre à jour » pour te reconnecter.':'Dernière mise à jour : '+(shSt.last?gAgo(shSt.last):'jamais')+'. Automatique après chaque séance, quand l\'app est ouverte.';
+  var st=shBusy?'Mise à jour…':shSt.err?'⚠ '+shSt.err+'. Appuie sur « Mettre à jour » pour te reconnecter.':'Dernière mise à jour : '+(shSt.last?gAgo(shSt.last):'jamais')+'. Automatique à la fin d\'une séance, puis une fois par jour au lancement.';
   h+='<div class="card" style="margin-top:10px"><div><b>Mes données sont partagées</b><div class="mute small">'+st+'</div></div><input class="in t shin" readonly value="'+esc(shUrl())+'" onclick="this.select()" aria-label="Ton lien de partage"><div class="row2"><button class="btn" data-act="shSend">Envoyer le lien</button><button class="btn soft" data-act="shCopy">Copier</button></div><div class="row2"><button class="btn soft" data-act="shNow">Mettre à jour</button><button class="btn line" data-act="shOff">Arrêter</button></div></div>';
  }
  if(!shP){

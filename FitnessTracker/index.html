@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6acd6a3c">
+<meta name="build" content="6acd6d14">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass')document.documentElement.setAttribute('data-gsub',(g&&/^[a-z]+$/.test(g)&&g!=='aurore')?g:'prisme')}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -914,10 +914,10 @@ section.ex input{-webkit-user-select:text;user-select:text}
 .td-pill.m-up{color:#FF8A3D;background:color-mix(in srgb,#FF7A2F 18%,transparent)}
 .td-pill.m-dn{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
 .td-pill svg{flex:none}
-.hd>div:first-child h1{white-space:nowrap}
-@media (max-width:400px){.td-pill small{display:none}}
-.hd.hp:has(.td-pill){min-height:104px}
-.hd.hp .td-hr{position:absolute;right:92px;top:11px;padding:0;flex-direction:row}
+.hd.hp>div:first-child{padding-right:88px}
+.td-mrow{margin:-6px 0 14px}
+.td-mrow .td-pill{height:36px;padding:0 14px}
+.td-mrow .td-pill small{font-size:13px}
 .cal-sum .rcn{white-space:nowrap}
 @media (max-width:400px){.cal-sum .rcn{display:none}}
 .td-c{padding:16px;margin-bottom:12px}
@@ -1605,15 +1605,16 @@ function momPill(){
  var pts=pgReel('e1rm',3);if(!pts.length)return '';
  var l=pts[pts.length-1];if((pd(todayISO()).getTime()-l.d.getTime())/864e5>30)return '';
  var v=l.pct,k=v>2?'up':v<-2?'dn':'flat',t=(Math.abs(v)<0.05?'':v>0?'+':'')+(Math.abs(v)>=100?Math.round(v):fmt(v))+' %';
- return '<button class="td-pill m-'+k+'" data-act="momGo" aria-label="Force sur 3 mois : '+t+'. Voir la progression">'+svg(k==='up'?'flame':k==='dn'?'down2':'eq',18)+'<b class="num">'+t+'</b><small>3 mois</small></button>';
+ return '<button class="td-pill m-'+k+'" data-act="momGo" aria-label="Force sur 3 mois : '+t+'. Voir la progression">'+svg(k==='up'?'flame':k==='dn'?'down2':'eq',18)+'<b class="num">'+t+'</b><small>de force sur 3 mois</small></button>';
 }
 function tplMus(t){var c={};t.items.forEach(function(i){var m=musOf(i.ex);c[m]=(c[m]||0)+i.sets});return Object.keys(c).sort(function(a,b){return c[b]-c[a]}).slice(0,4)}
 function nbRec(x){var n=0;x.items.forEach(function(it){if(crownIdx(it.sets,prevBestE1(it.ex,x),false)>=0)n++});return n}
 function todayView(){
  var now=new Date(),di=dow(now),tds=iso(now),plan=planFor(tds),tpl=S.tpls.find(function(t){return t.id===plan});
- var hr=ui.ro?'<span id="sync" class="sync '+ui.sync+'"><i></i>'+syncText()+'</span>':'<span class="td-hr">'+(ui.sync==='err'?'<span id="sync" class="sync err"><i></i>Hors ligne</span>':'')+(S.active?'':momPill())+'</span>';
+ var hr=ui.ro?'<span id="sync" class="sync '+ui.sync+'"><i></i>'+syncText()+'</span>':'<span class="td-hr">'+(ui.sync==='err'?'<span id="sync" class="sync err"><i></i>Hors ligne</span>':'')+'</span>';
  var h='<header class="hd"><div><p class="eyebrow">'+DAYS[di]+'</p><h1>'+now.getDate()+' '+MONTHS[now.getMonth()]+'</h1></div>'+hr+'</header>';
  if(ui.ro&&!S.active)h+=momHTML();
+ if(!ui.ro&&!S.active){var mp=momPill();if(mp)h+='<div class="td-mrow">'+mp+'</div>'}
  var doneT=SESS.filter(function(x){return x.date===tds});
  if(ui.ro){}
  else if(S.active){

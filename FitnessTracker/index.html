@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6acd4d7d">
+<meta name="build" content="6acd4fc7">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass'&&g&&/^[a-z]+$/.test(g)&&g!=='aurore')document.documentElement.setAttribute('data-gsub',g)}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 html{background:var(--bg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .boot{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#FF8A4C}.boot b{font:700 14px 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.32em;color:#A9B0B6}
@@ -720,6 +720,93 @@ html:root[data-skin="glass"][data-gsub="graphite"] .btn.soft{background:var(--su
 html:root[data-skin="glass"][data-gsub="graphite"] .btn.line{background:transparent;color:var(--fg);box-shadow:none;border-color:var(--bd)}
 html:root[data-skin="glass"][data-gsub="graphite"] .btn.danger{background:transparent;color:var(--bad);box-shadow:none}
 html:root[data-skin="glass"][data-gsub="graphite"] .cd.empty::before{display:none}
+/* ================= thème Blueprint ================= */
+html:root[data-skin="blueprint"]{
+ --bg:#0E2A5C;--surf:rgba(10,34,80,.82);--surf2:rgba(127,214,255,.09);--line:rgba(127,214,255,.34);
+ --fg:#E8F5FF;--mute:#8CC6EA;--acc:#FFD27F;--acc-ink:#0a1b3d;--good:#FFD27F;--bad:#FF9A9A;
+ --veil:rgba(3,12,34,.62);--bd:rgba(127,214,255,.62);--sheen:transparent;--shn:rgba(127,214,255,.25);
+ --disp:'Barlow Condensed',system-ui,sans-serif;--body:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+ color-scheme:dark;
+}
+html[data-skin="blueprint"] body{background:linear-gradient(rgba(127,214,255,.13) 1px,transparent 1px) 0 0/80px 80px,linear-gradient(90deg,rgba(127,214,255,.13) 1px,transparent 1px) 0 0/80px 80px,linear-gradient(rgba(127,214,255,.06) 1px,transparent 1px) 0 0/16px 16px,linear-gradient(90deg,rgba(127,214,255,.06) 1px,transparent 1px) 0 0/16px 16px,#0E2A5C;background-attachment:fixed;font-size:15px}
+/* tout est rectangulaire */
+html[data-skin="blueprint"] :is(.card,.ex,.empty,.welcome,.cardc,.cal,.mom,.sheet,.modal,.platn,.cal-sum,.rob,.item,.fr,.stats div,.titem,.esum div,.wd,.expb,.pk,.btn,.seg button,.chip,.pill,.in,select.in,.chk,button.sn,.nav,.nav-ind,.prof,.toast,.updbar,.cd,.skb,.skp,.srow,.mu-bar,.mu-f,.colb .cok,.cd .n,.wsteps li>b,.prof .pi,.prof i,.dot:not(.ring)){border-radius:0}
+html[data-skin="blueprint"] :is(.card,.ex,.empty,.welcome,.cardc,.cal,.mom,.platn,.cal-sum,.rob){border:1px solid var(--bd);background:var(--surf);box-shadow:none}
+html[data-skin="blueprint"] :is(.item,.fr,.stats div,.titem,.esum div,.wd,.expb,.pk){background:var(--surf);box-shadow:inset 0 0 0 1px rgba(127,214,255,.5)}
+html[data-skin="blueprint"] .fr.stale{box-shadow:inset 0 0 0 1px rgba(127,214,255,.22)}
+/* équerres ambre dans le coin */
+html[data-skin="blueprint"] :is(.mom,.ex,.cardc,.welcome){position:relative}
+html[data-skin="blueprint"] :is(.mom,.ex,.cardc,.welcome)::before{content:'';position:absolute;left:-1px;top:-1px;width:10px;height:10px;border-left:3px solid #FFD27F;border-top:3px solid #FFD27F;pointer-events:none}
+html[data-skin="blueprint"] .mom{background-image:none}
+html[data-skin="blueprint"] .mom.m-up{border-color:#FFD27F}
+html[data-skin="blueprint"] .mom.m-dn{border-color:#7FD6FF}
+html[data-skin="blueprint"] .mom .mi{background:transparent;border-radius:0;color:#FFD27F}
+html[data-skin="blueprint"] .sheet{background:rgba(7,24,60,.97);border-top:1px solid var(--bd)}
+html[data-skin="blueprint"] .modal{background:rgba(7,24,60,.97);border:1px solid var(--bd)}
+html[data-skin="blueprint"] .nav{border-top:1px solid #7FD6FF;background:#0a2250}
+html[data-skin="blueprint"] .nav-ind{background:rgba(255,210,127,.1);border-bottom:2px solid #FFD27F}
+html[data-skin="blueprint"] .nav button{font-size:11px;letter-spacing:.02em}
+html[data-skin="blueprint"] .top{border-bottom-color:var(--line)}
+/* titres */
+html[data-skin="blueprint"] h1{font:700 34px/1 var(--disp);letter-spacing:.04em;color:#fff}
+html[data-skin="blueprint"] .shd h2{font:600 12px/1 var(--body);letter-spacing:.1em;color:#7FD6FF}
+html[data-skin="blueprint"] .shd h2::before{content:'▸ ';color:#FFD27F}
+html[data-skin="blueprint"] .eyebrow{font-family:var(--body);font-size:10px;letter-spacing:.14em;color:#7FD6FF}
+html[data-skin="blueprint"] :is(h3,.ex h3){color:#fff}
+/* boutons */
+html[data-skin="blueprint"] .btn{background:rgba(255,210,127,.1);color:#FFD27F;border:1px solid #FFD27F;text-transform:uppercase;letter-spacing:.1em;font-size:13px;font-weight:600;box-shadow:none}
+html[data-skin="blueprint"] .btn.soft{background:rgba(127,214,255,.1);color:#9fdcff;border-color:#7FD6FF}
+html[data-skin="blueprint"] .btn.line{background:transparent;color:#8CC6EA;border:1px dashed #3d79b3}
+html[data-skin="blueprint"] .btn.danger{background:transparent;color:var(--bad);border:1px solid rgba(255,154,154,.5)}
+html[data-skin="blueprint"] .seg button,html[data-skin="blueprint"] .chip,html[data-skin="blueprint"] .pill{background:transparent;border:1px solid #3d79b3;color:#6bb8e6;box-shadow:none;font-size:12px;letter-spacing:.02em}
+html[data-skin="blueprint"] .seg button[aria-pressed="true"]{background:rgba(255,210,127,.1);border-color:#FFD27F;color:#FFD27F}
+html[data-skin="blueprint"] :is(.in,.chk,select.in){background:rgba(6,24,58,.65);border:1px solid #3d79b3;color:#fff}
+html[data-skin="blueprint"] .in{font-family:var(--body);font-weight:600;font-size:17px}
+html[data-skin="blueprint"] .in:focus{border-color:#FFD27F;outline:none}
+html[data-skin="blueprint"] .srow.done{background:rgba(255,210,127,.06)}
+html[data-skin="blueprint"] .srow.done .in{border-color:rgba(255,210,127,.55)}
+html[data-skin="blueprint"] .srow.done .chk{background:rgba(255,210,127,.16);border-color:#FFD27F;color:#FFD27F}
+html[data-skin="blueprint"] .srow.next{background:rgba(127,214,255,.06)}
+html[data-skin="blueprint"] .srow.next .chk{border-color:#FFD27F;color:#FFD27F}
+html[data-skin="blueprint"] button.sn{background:rgba(127,214,255,.1)}
+html[data-skin="blueprint"] .colb .cok{background:#FFD27F;color:#0a1b3d}
+html[data-skin="blueprint"] .rest{background:#0a2250;border-top:1px solid #FFD27F}
+html[data-skin="blueprint"] .rg-bg{stroke:rgba(127,214,255,.25)}
+html[data-skin="blueprint"] .rg-f{stroke:#FFD27F}
+/* calendrier */
+html[data-skin="blueprint"] .cd.today .n{background:transparent;color:#FFD27F;outline:1px dashed #FFD27F;outline-offset:2px}
+html[data-skin="blueprint"] .wsteps li>b{background:#FFD27F;color:#0a1b3d}
+html[data-skin="blueprint"] .wd.today{border-color:#FFD27F;border-style:dashed}
+html[data-skin="blueprint"] .dot:not(.ring){background:rgba(127,214,255,.3)}
+html[data-skin="blueprint"] .dot.ring{border-radius:0}
+html[data-skin="blueprint"] .cd.empty{border:0!important;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html[data-skin="blueprint"] .cd.empty::before{display:none}
+html[data-skin="blueprint"] .in.t{font-family:Barlow,system-ui,sans-serif;font-size:16px;font-weight:500}
+html[data-skin="blueprint"] .pv{font-size:12px;letter-spacing:-.03em}
+html[data-skin="blueprint"] .btn[data-act=setAdd],html[data-skin="blueprint"] .btn[data-act=setDel],html[data-skin="blueprint"] .btn[data-act=warm]{font-size:10.5px;letter-spacing:0;padding:0 8px}
+html[data-skin="blueprint"] .btn.s{letter-spacing:.02em;font-size:11px;padding:0 10px}
+html[data-skin="blueprint"] ::placeholder{color:rgba(140,198,234,.7)}
+/* barres, profils */
+html[data-skin="blueprint"] .mu-bar{background:rgba(127,214,255,.15)}
+html[data-skin="blueprint"] .mu-f{background:#FFD27F}
+html[data-skin="blueprint"] .prof{background:#0a2250;box-shadow:inset 0 0 0 1px #7FD6FF}
+html[data-skin="blueprint"] .prof .pi{background:#FFD27F}
+html[data-skin="blueprint"] .prof i.on{color:#0a1b3d}
+/* courbes */
+html[data-skin="blueprint"] .ch-grid{stroke:rgba(127,214,255,.22);stroke-width:.7}
+html[data-skin="blueprint"] .ch-t{font-family:var(--body);font-size:10px;fill:#9fdcff}
+html[data-skin="blueprint"] .ch-line{stroke:#7FD6FF;stroke-width:1.8;filter:none}
+html[data-skin="blueprint"] .ch-area{fill:rgba(127,214,255,.09)}
+html[data-skin="blueprint"] .ch-pt{fill:#0a2250;stroke:#7FD6FF}
+html[data-skin="blueprint"] .ch-sel{fill:#FFD27F;stroke:#0a2250}
+html[data-skin="blueprint"] .ch-best{fill:none;stroke:#FFD27F;stroke-opacity:.9;stroke-width:1.4}
+html[data-skin="blueprint"] .ch-guide{stroke:#FFD27F}
+html[data-skin="blueprint"] .read b{color:#fff;background:none;-webkit-text-fill-color:#fff}
+/* divers */
+html[data-skin="blueprint"] .toast{background:#0a2250;color:#fff;border:1px solid #FFD27F;box-shadow:none;font-size:14px}
+html[data-skin="blueprint"] .updbar{background:#FFD27F;color:#0a1b3d;box-shadow:none;border:1px solid #fff}
+html[data-skin="blueprint"] .skb[aria-pressed="true"]{border-color:#FFD27F}
+html[data-skin="blueprint"] .ov{-webkit-backdrop-filter:none;backdrop-filter:none}
 </style>
 </head>
 <body>
@@ -905,7 +992,8 @@ var accKey='';
 /* ---- thèmes (skins) : pour en ajouter un, une entrée ici + un bloc CSS html[data-skin="id"] ---- */
 var SKINS=[
  {id:'base',n:'Base',d:'Sombre, accent orangé',tc:'#111417',bg:'#111417',card:'#262C32',acc:'#FF8A4C'},
- {id:'glass',n:'Glass',d:'Verre dépoli, aurore douce',tc:'#0d0b24',bg:'linear-gradient(135deg,#5b3fd1,#12a89a 60%,#c2418e)',card:'rgba(255,255,255,.22)',acc:'linear-gradient(90deg,#8E7DFF,#C39BFF)'}
+ {id:'glass',n:'Glass',d:'Verre dépoli, aurore douce',tc:'#0d0b24',bg:'linear-gradient(135deg,#5b3fd1,#12a89a 60%,#c2418e)',card:'rgba(255,255,255,.22)',acc:'linear-gradient(90deg,#8E7DFF,#C39BFF)'},
+ {id:'blueprint',n:'Blueprint',d:'Plan technique, lignes cyan',tc:'#0E2A5C',bg:'linear-gradient(rgba(127,214,255,.3) 1px,transparent 1px) 0 0/9px 9px,linear-gradient(90deg,rgba(127,214,255,.3) 1px,transparent 1px) 0 0/9px 9px,#0E2A5C',card:'rgba(10,34,80,.92)',acc:'#FFD27F'}
 ];
 var GSUBS=[
  {id:'aurore',n:'Aurore',tc:'#0d0b24',sw:'linear-gradient(135deg,#8E7DFF,#5EEAD4)'},

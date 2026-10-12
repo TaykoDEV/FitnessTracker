@@ -7,7 +7,8 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6aca47d8">
+<meta name="build" content="6acd482e">
+<script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base')document.documentElement.setAttribute('data-skin',k)}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fitness Tracker">
@@ -17,7 +18,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap">
 <style>
 html{background:var(--bg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .boot{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#FF8A4C}.boot b{font:700 14px 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.32em;color:#A9B0B6}
@@ -547,6 +548,92 @@ svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
 #toasts{position:fixed;left:16px;right:16px;bottom:84px;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:20}
 .toast{background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:16px;max-width:520px;text-align:center}
 @media (prefers-reduced-motion:no-preference){.toast{animation:tin .18s ease-out}@keyframes tin{from{opacity:0;transform:translateY(6px)}}}
+
+/* ---- sélecteur de thème ---- */
+.skg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.skb{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px;border-radius:16px;background:var(--surf2);border:2px solid transparent;text-align:left;min-width:0}
+.skb[aria-pressed="true"]{border-color:var(--acc)}
+.skb b{font-weight:700;font-size:15px;margin-top:5px}.skb small{color:var(--mute);font-size:12px;line-height:1.25}
+.skp{position:relative;display:block;width:100%;height:68px;border-radius:10px;overflow:hidden}
+.skp i{position:absolute;display:block}.skp i.a{left:8px;right:8px;top:8px;height:28px;border-radius:9px}.skp i.b{left:8px;width:46%;bottom:9px;height:14px;border-radius:99px}
+
+/* ================= thème Glass ================= */
+html:root[data-skin="glass"]{
+ --bg:#0d0b24;--surf:rgba(255,255,255,.075);--surf2:rgba(255,255,255,.12);--line:rgba(255,255,255,.14);
+ --fg:#F3F1FF;--mute:#BEB9EC;--acc:#A592FF;--acc-ink:#0E0B26;--good:#5EEAD4;--bad:#FF8FB1;
+ --veil:rgba(8,6,28,.5);--bd:rgba(255,255,255,.17);--sheen:rgba(255,255,255,.1);--shn:rgba(255,255,255,.3);
+ --disp:'Outfit','Barlow',system-ui,sans-serif;--body:'Outfit','Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+ --gl-a:#8E7DFF;--gl-b:#5EEAD4;--gl-c:#C39BFF;
+ color-scheme:dark;
+}
+html[data-skin="glass"] body{background:radial-gradient(120% 55% at 12% -5%,rgba(110,76,240,.95) 0%,transparent 62%),radial-gradient(85% 45% at 105% 28%,rgba(18,176,160,.72) 0%,transparent 58%),radial-gradient(110% 55% at -10% 105%,rgba(206,70,150,.72) 0%,transparent 58%),#0d0b24;background-attachment:fixed}
+/* surfaces vitrées */
+html[data-skin="glass"] :is(.card,.ex,.empty,.welcome,.cardc,.cal,.mom,.sheet,.modal,.platn,.cal-sum,.rob){
+ background-color:var(--surf);background-image:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.02) 55%);
+ -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);
+ box-shadow:inset 0 0 0 1px var(--bd),inset 0 1px 0 rgba(255,255,255,.22),0 10px 32px rgba(4,2,20,.28)}
+html[data-skin="glass"] :is(.item,.fr,.stats div,.titem,.esum div,.wd,.expb,.pk){box-shadow:inset 0 0 0 1px var(--bd),inset 0 1px 0 rgba(255,255,255,.14)}
+html[data-skin="glass"] :is(.card,.ex,.empty,.welcome,.cardc,.cal){border-radius:24px}
+html[data-skin="glass"] :is(.item,.fr,.stats div,.titem,.platn,.cal-sum,.rob,.expb){border-radius:18px}
+html[data-skin="glass"] .mom{border-radius:26px;border-color:var(--bd);background-image:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.04))}
+html[data-skin="glass"] .mom.m-up{background-image:linear-gradient(135deg,rgba(255,150,70,.32),rgba(255,255,255,.06));border-color:rgba(255,170,100,.45)}
+html[data-skin="glass"] .mom.m-dn{background-image:linear-gradient(135deg,rgba(90,150,255,.32),rgba(255,255,255,.05));border-color:rgba(120,170,255,.45)}
+html[data-skin="glass"] .mom .mi{background:rgba(255,255,255,.14)}
+html[data-skin="glass"] .mom.m-up .mi{box-shadow:0 0 22px rgba(255,170,100,.4)}
+html[data-skin="glass"] .sheet{background-color:rgba(34,27,84,.78);-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);border-radius:28px 28px 0 0}
+html[data-skin="glass"] .modal{background-color:rgba(34,27,84,.8);-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);border-radius:26px}
+html[data-skin="glass"] .ov{-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+/* barre d'onglets flottante */
+html[data-skin="glass"] .nav{margin:0 12px 10px;border-radius:26px;border:1px solid var(--bd);background:rgba(255,255,255,.09);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);box-shadow:0 10px 30px rgba(4,2,20,.38),inset 0 1px 0 rgba(255,255,255,.2)}
+html[data-skin="glass"] .nav-ind{background:rgba(255,255,255,.17);box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+html[data-skin="glass"] .nav button[aria-current="page"]{color:#fff}
+html[data-skin="glass"] .top{border-bottom-color:transparent}
+/* typo */
+html[data-skin="glass"] :is(h1,h2,h3,.item .main b,.mom .mt b,.date,.top .ttl b,.cal-h b,.cal-t,.cal-sum b,.drow b,.colb .cn,.stats span,.esum span,.sum-pr h3){text-transform:none}
+html[data-skin="glass"] h1{font:600 36px/1.05 var(--disp);letter-spacing:-.02em}
+html[data-skin="glass"] h2{font:600 24px/1.1 var(--disp);letter-spacing:-.01em}
+html[data-skin="glass"] h3{font:600 20px/1.1 var(--disp)}
+html[data-skin="glass"] .ex h3{font:600 22px/1.15 var(--disp);letter-spacing:0}
+html[data-skin="glass"] .shd h2{font:600 15px/1 var(--disp);letter-spacing:.03em;color:var(--mute)}
+html[data-skin="glass"] .eyebrow{color:var(--mute)}
+html[data-skin="glass"] .top .ttl b,html[data-skin="glass"] .cal-h b,html[data-skin="glass"] .cal-t{font-weight:600}
+/* boutons et contrôles */
+html[data-skin="glass"] .btn{background:linear-gradient(135deg,var(--gl-a),var(--gl-c));color:var(--acc-ink);border-radius:18px;box-shadow:0 8px 24px rgba(124,92,255,.36),inset 0 1px 0 rgba(255,255,255,.4);font-weight:600}
+html[data-skin="glass"] .btn.soft{background:var(--surf2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--bd)}
+html[data-skin="glass"] .btn.line{background:transparent;color:var(--fg);box-shadow:none;border-color:var(--bd)}
+html[data-skin="glass"] .btn.danger{background:transparent;color:var(--bad);box-shadow:none}
+html[data-skin="glass"] .seg button{background:var(--surf2);border-color:var(--bd)}
+html[data-skin="glass"] .seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--gl-a),var(--gl-c));border-color:transparent;color:var(--acc-ink)}
+html[data-skin="glass"] .chip,html[data-skin="glass"] .pill{background:var(--surf2);box-shadow:inset 0 0 0 1px var(--bd)}
+html[data-skin="glass"] .in,html[data-skin="glass"] .chk,html[data-skin="glass"] select.in{background:rgba(255,255,255,.1);border-color:var(--bd);border-radius:14px}
+html[data-skin="glass"] .srow.done{background:rgba(94,234,212,.12)}
+html[data-skin="glass"] .srow.done .in{border-color:rgba(94,234,212,.5)}
+html[data-skin="glass"] .srow.done .chk{background:linear-gradient(135deg,var(--gl-b),var(--gl-a));border-color:transparent;color:var(--acc-ink)}
+html[data-skin="glass"] .srow.next{background:rgba(255,255,255,.07)}
+html[data-skin="glass"] .srow.next .chk{border-color:var(--gl-b);color:var(--gl-b)}
+html[data-skin="glass"] button.sn{background:rgba(255,255,255,.1)}
+html[data-skin="glass"] .colb .cok{background:linear-gradient(135deg,var(--gl-b),var(--gl-a))}
+html[data-skin="glass"] .rest{background:rgba(255,255,255,.1);border-top-color:var(--bd)}
+html[data-skin="glass"] .rg-bg{stroke:rgba(255,255,255,.16)}
+html[data-skin="glass"] .rg-f{stroke:url(#none);stroke:var(--gl-b)}
+/* calendrier, semaine, muscles */
+html[data-skin="glass"] .cd.today .n,html[data-skin="glass"] .wsteps li>b{background:linear-gradient(135deg,var(--gl-a),var(--gl-c));color:var(--acc-ink)}
+html[data-skin="glass"] .wd.today{border-color:rgba(255,255,255,.55)}
+html[data-skin="glass"] .fr.stale{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+html[data-skin="glass"] .mu-bar{background:rgba(255,255,255,.1)}
+html[data-skin="glass"] .mu-f{background:linear-gradient(90deg,var(--gl-b),var(--gl-a))}
+html[data-skin="glass"] .prof{background:rgba(255,255,255,.12)}
+html[data-skin="glass"] .prof .pi{background:linear-gradient(135deg,var(--gl-a),var(--gl-c))}
+/* courbes */
+html[data-skin="glass"] .ch-grid{stroke:rgba(255,255,255,.1)}
+html[data-skin="glass"] .ch-line{stroke:#BBAAFF;stroke-width:2.7;filter:drop-shadow(0 0 6px rgba(150,120,255,.85))}
+html[data-skin="glass"] .ch-pt{fill:#1d1646;stroke:#BBAAFF}
+html[data-skin="glass"] .ch-sel{fill:#fff;stroke:rgba(165,146,255,.7)}
+html[data-skin="glass"] .read b{background:linear-gradient(90deg,var(--gl-b),var(--gl-c));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+/* toasts et bannière */
+html[data-skin="glass"] .toast{background:rgba(255,255,255,.2);color:#fff;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px var(--bd),0 8px 24px rgba(0,0,0,.3);border-radius:16px}
+html[data-skin="glass"] .updbar{background:linear-gradient(135deg,var(--gl-a),var(--gl-c));color:var(--acc-ink)}
+html[data-skin="glass"] .skb[aria-pressed="true"]{border-color:var(--gl-c)}
 </style>
 </head>
 <body>
@@ -729,8 +816,24 @@ function mcol(k){return MUC[k]||MUC.autre}
 function mdot(ex){return '<i class="mdot" style="background:'+mcol(musOf(ex))+'"></i>'}
 var ACC={orange:{n:'Orange',d:['#FF8A4C','#1B0F07'],l:['#C2410C','#FFFFFF']},rouge:{n:'Rouge',d:['#FF6B6B','#2A0A0A'],l:['#C62828','#FFFFFF']},vert:{n:'Vert',d:['#4FD08A','#04210F'],l:['#1B7F45','#FFFFFF']},bleu:{n:'Bleu',d:['#4C9BFF','#04152B'],l:['#1D5FD0','#FFFFFF']},violet:{n:'Violet',d:['#A98BFF','#140A33'],l:['#6D3FD6','#FFFFFF']},rose:{n:'Rose',d:['#FF7BB5','#2B0A1A'],l:['#C2185B','#FFFFFF']}};
 var accKey='';
+/* ---- thèmes (skins) : pour en ajouter un, une entrée ici + un bloc CSS html[data-skin="id"] ---- */
+var SKINS=[
+ {id:'base',n:'Base',d:'Sombre, accent orangé',tc:'#111417',bg:'#111417',card:'#262C32',acc:'#FF8A4C'},
+ {id:'glass',n:'Glass',d:'Verre dépoli, aurore douce',tc:'#0d0b24',bg:'linear-gradient(135deg,#5b3fd1,#12a89a 60%,#c2418e)',card:'rgba(255,255,255,.22)',acc:'linear-gradient(90deg,#8E7DFF,#C39BFF)'}
+];
+function skinGet(){var k='base';try{k=localStorage.getItem('ft.skin')||'base'}catch(e){}return SKINS.some(function(x){return x.id===k})?k:'base'}
+var skinCur=skinGet();
+function skinApply(k){
+ skinCur=k;var de=document.documentElement;
+ if(k==='base')de.removeAttribute('data-skin');else de.setAttribute('data-skin',k);
+ var sk=SKINS.filter(function(x){return x.id===k})[0],m=document.querySelector('meta[name="theme-color"]');
+ if(m&&sk)m.setAttribute('content',sk.tc);
+}
+skinApply(skinCur);
 function isDarkNow(){var t=document.documentElement.getAttribute('data-theme');if(t)return t==='dark';try{return !matchMedia('(prefers-color-scheme: light)').matches}catch(e){return true}}
 function applyAcc(){
+ var st0=document.documentElement.style;
+ if(skinCur!=='base'){st0.removeProperty('--acc');st0.removeProperty('--acc-ink');accKey='';return}
  var k=ACC[S.set.acc]?S.set.acc:'orange',dk=isDarkNow(),sig=k+dk;if(sig===accKey)return;accKey=sig;
  var st=document.documentElement.style;
  if(k==='orange'){st.removeProperty('--acc');st.removeProperty('--acc-ink')}
@@ -1151,19 +1254,20 @@ function exSum(s,it){
  return h+'<div class="edl">'+ln+'</div>';
 }
 
-var momShown=false;
-function momAnimNow(){if(momShown)return false;momShown=true;return true}
+var momShown=false,momRoShown=false;
+function momAnimNow(){if(ui.ro){if(momRoShown)return false;momRoShown=true;return true}if(momShown)return false;momShown=true;return true}
 function momHTML(){
  var pts=pgReel('e1rm',3);if(!pts.length)return '';
  var l=pts[pts.length-1];if((pd(todayISO()).getTime()-l.d.getTime())/864e5>30)return '';
  var v=l.pct,k=v>2?'up':v<-2?'dn':'flat',anim=momAnimNow();
- var T={up:['En progression','Tes charges montent, continue comme ça !'],flat:['Tu stagnes','Niveau stable : pousse un peu plus aujourd\'hui.'],dn:['En baisse','Petit creux, ça arrive. Reviens plus fort !']}[k];
+ var nm=ui.ro?esc(ui.ro.name||'l\'autre profil'):'';
+ var T=(ui.ro?{up:['En progression','Les charges de '+nm+' montent.'],flat:['Stagnation','Niveau stable chez '+nm+'.'],dn:['En baisse','Petit creux chez '+nm+', ça arrive.']}:{up:['En progression','Tes charges montent, continue comme ça !'],flat:['Tu stagnes','Niveau stable : pousse un peu plus aujourd\'hui.'],dn:['En baisse','Petit creux, ça arrive. Reviens plus fort !']})[k];
  return '<button class="mom m-'+k+(anim?' pop':'')+'" data-act="momGo" aria-label="'+T[0]+', '+(v>0?'+':'')+fmt(v)+' pour cent sur 3 mois. Voir la progression"><span class="mi">'+svg(k==='up'?'flame':k==='dn'?'down2':'eq',26)+'</span><span class="mt"><b>'+T[0]+'</b><small>'+T[1]+'</small></span><span class="mv num">'+(Math.abs(v)<0.05?'':v>0?'+':'')+(Math.abs(v)>=100?Math.round(v):fmt(v))+' %<small>vs 3 mois</small></span></button>';
 }
 function todayView(){
  var now=new Date(),di=dow(now),tds=iso(now),plan=planFor(tds),tpl=S.tpls.find(function(t){return t.id===plan});
  var h='<header class="hd"><div><p class="eyebrow">'+DAYS[di]+'</p><h1>'+now.getDate()+' '+MONTHS[now.getMonth()]+'</h1></div><span id="sync" class="sync '+ui.sync+'"><i></i>'+syncText()+'</span></header>';
- if(!ui.ro&&!S.active)h+=momHTML();
+ if(!S.active)h+=momHTML();
  if(ui.ro){}
  else if(S.active){
   var a=S.active,n=countSets(a);
@@ -1587,7 +1691,9 @@ function progressView(){
 
 function settingsView(){
  var h='<header class="hd"><div><p class="eyebrow">Application</p><h1>Réglages</h1></div></header>';
- h+='<div class="shd" style="margin-top:4px"><h2>Préférences</h2></div><div class="card"><div><b>Couleur d\'accent</b><div class="mute small">Boutons, séries cochées, courbes</div></div><div class="sw">'+Object.keys(ACC).map(function(k){return '<button data-act="acc" data-v="'+k+'" style="background:'+ACC[k][isDarkNow()?'d':'l'][0]+'" aria-pressed="'+((S.set.acc||'orange')===k)+'" aria-label="'+ACC[k].n+'"></button>'}).join('')+'</div></div>';
+ h+='<div class="shd" style="margin-top:4px"><h2>Apparence</h2></div><div class="card"><div><b>Thème</b><div class="mute small">Change le style de toute l\'appli</div></div><div class="skg">'+SKINS.map(function(x){return '<button class="skb" data-act="skin" data-v="'+x.id+'" aria-pressed="'+(skinCur===x.id)+'"><span class="skp" style="background:'+x.bg+'"><i class="a" style="background:'+x.card+'"></i><i class="b" style="background:'+x.acc+'"></i></span><b>'+x.n+'</b><small>'+x.d+'</small></button>'}).join('')+'</div></div>';
+ h+='<div class="shd"><h2>Préférences</h2></div>';
+ if(skinCur==='base')h+='<div class="card" style="margin-top:10px"><div><b>Couleur d\'accent</b><div class="mute small">Boutons, séries cochées, courbes</div></div><div class="sw">'+Object.keys(ACC).map(function(k){return '<button data-act="acc" data-v="'+k+'" style="background:'+ACC[k][isDarkNow()?'d':'l'][0]+'" aria-pressed="'+((S.set.acc||'orange')===k)+'" aria-label="'+ACC[k].n+'"></button>'}).join('')+'</div></div>';
  h+='<div class="card" style="margin-top:10px;flex-direction:row;align-items:center;justify-content:space-between"><div><b>Repos entre séries</b><div class="mute small">Le minuteur démarre quand tu coches une série</div></div><div class="stp"><button class="ibtn" data-act="restSet" data-d="-15" aria-label="Moins 15 secondes">'+svg('minus',20)+'</button><b class="num">'+S.set.rest+'s</b><button class="ibtn" data-act="restSet" data-d="15" aria-label="Plus 15 secondes">'+svg('plus',20)+'</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Écran allumé</b><div class="mute small">Pendant une séance en cours</div></div><div class="seg"><button data-act="setOpt" data-k="wake" data-v="1" aria-pressed="'+(S.set.wake!==false)+'">Oui</button><button data-act="setOpt" data-k="wake" data-v="0" aria-pressed="'+(S.set.wake===false)+'">Non</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Fin de repos écran verrouillé</b><div class="mute small">Notification + vibration, via un son silencieux qui garde l\'app active. Peut mettre ta musique en pause.</div></div><div class="seg"><button data-act="setOpt" data-k="notif" data-v="1" aria-pressed="'+(S.set.notif!==false)+'">Oui</button><button data-act="setOpt" data-k="notif" data-v="0" aria-pressed="'+(S.set.notif===false)+'">Non</button></div></div>';
@@ -2002,6 +2108,7 @@ var A={
  dayOpen:function(b){var d=b.dataset.date;vt('fwd',function(){ui.route={name:'day',date:d};ui.sheet=null;render()})},
  dayBack:function(){vt('back',function(){ui.route={name:'main'};ui.tab='today';render()})},
  acc:function(b){S.set.acc=b.dataset.v;dirtyCfg();render()},
+ skin:function(b){var v=b.dataset.v;try{localStorage.setItem('ft.skin',v)}catch(e){}skinApply(v);accKey='';applyAcc();hap(10);render()},
  calToggle:function(){S.set.cal=!S.set.cal;dirtyCfg();render()},
  calPrev:function(){calStep(-1)},
  calNext:function(){calStep(1)},
@@ -2563,7 +2670,7 @@ function roLoad(){
 function roReset(){ui.pgsel=null;ui.route={name:'main'};ui.sheet=null;ui.modal=null;ui.px=null;ui.sel=null;ui.bsel=null;ui.vsel=null;ui.muo=null;if(ui.pv==='bw')ui.pv='ex'}
 function roEnter(){
  if(!shP||!shP.data||ui.ro)return;
- OWN={S:S,SESS:SESS};ui.ro={name:shP.name};roLoad();roReset();
+ OWN={S:S,SESS:SESS};ui.ro={name:shP.name};momRoShown=false;roLoad();roReset();
  if(ui.tab==='prog'||ui.tab==='set')ui.tab='today';
 }
 function roExit(){if(!OWN)return;S=OWN.S;SESS=OWN.SESS;OWN=null;ui.ro=null;roReset()}

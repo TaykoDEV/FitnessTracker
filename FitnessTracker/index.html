@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6acd677a">
+<meta name="build" content="6acd6a3c">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass')document.documentElement.setAttribute('data-gsub',(g&&/^[a-z]+$/.test(g)&&g!=='aurore')?g:'prisme')}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -916,6 +916,10 @@ section.ex input{-webkit-user-select:text;user-select:text}
 .td-pill svg{flex:none}
 .hd>div:first-child h1{white-space:nowrap}
 @media (max-width:400px){.td-pill small{display:none}}
+.hd.hp:has(.td-pill){min-height:104px}
+.hd.hp .td-hr{position:absolute;right:92px;top:11px;padding:0;flex-direction:row}
+.cal-sum .rcn{white-space:nowrap}
+@media (max-width:400px){.cal-sum .rcn{display:none}}
 .td-c{padding:16px;margin-bottom:12px}
 .td-c.act{border-left:4px solid var(--acc)}
 .td-e{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);margin:0 0 6px}
@@ -1632,10 +1636,9 @@ function todayView(){
   h+='</section>';
  }
  h+=S.set.cal?'<div class="shd"><h2>Calendrier</h2><button class="pill" data-act="calToggle" aria-expanded="true">Masquer</button></div>'+calHTML():calSum();
- h+=muFresh();
  if(!ui.ro&&typeof recapHTML==='function'){
   var rch=recapHTML();
-  if(rch){var o=!!ui.rcOpen,a2=typeof shOwnStat!=='undefined'&&shOwnStat&&shOwnStat.v;h+='<button class="cal-sum" data-act="rcTog" aria-expanded="'+o+'"><span><b>Récap de '+MONTHS[(now.getMonth()+11)%12]+'</b>'+(a2&&a2.n!=null?'<small> · '+a2.n+' séance'+(a2.n>1?'s':'')+'</small>':'')+'</span>'+svg(o?'up':'down',20)+'</button>'+(o?rch:'')}
+  if(rch){var o=!!ui.rcOpen,a2=typeof shOwnStat!=='undefined'&&shOwnStat&&shOwnStat.v;h+='<button class="cal-sum" data-act="rcTog" aria-expanded="'+o+'"><span><b>Récap de '+MONTHS[(now.getMonth()+11)%12]+'</b>'+(a2&&a2.n!=null?'<small class="rcn"> · '+a2.n+' séance'+(a2.n>1?'s':'')+'</small>':'')+'</span>'+svg(o?'up':'down',20)+'</button>'+(o?rch:'')}
  }
  return h;
 }
@@ -1919,7 +1922,7 @@ function pgDays(metric){
 function pgMainsFrom(cnt){
  var hid=S.set.hideMu||{},by={},out=[];
  Object.keys(cnt).forEach(function(ex){if(!(cnt[ex]>0))return;var m=musOf(ex);if(m==='autre'||hid[m])return;(by[m]=by[m]||[]).push(ex)});
- Object.keys(MUS).forEach(function(m){if(!by[m])return;by[m].sort(function(a,b){return cnt[b]-cnt[a]||(a<b?-1:1)});by[m].slice(0,2).forEach(function(ex){out.push(ex)})});
+ Object.keys(MUS).forEach(function(m){if(!by[m])return;by[m].sort(function(a,b){return cnt[b]-cnt[a]||(a<b?-1:1)});by[m].slice(0,3).forEach(function(ex){out.push(ex)})});
  return out;
 }
 function pgShiftM(t,m){var w=new Date(t);w.setMonth(w.getMonth()-m);return w.getTime()}
@@ -2194,7 +2197,7 @@ function settingsView(){
  h+=netUI();
  h+='<div class="card" style="margin-top:10px"><div><b>Retour haptique</b><div class="mute small">Petite vibration quand tu coches une série ou bats un record</div></div><div class="seg"><button data-act="setOpt" data-k="hap" data-v="1" aria-pressed="'+(S.set.hap!==false)+'">Oui</button><button data-act="setOpt" data-k="hap" data-v="0" aria-pressed="'+(S.set.hap===false)+'">Non</button></div></div>';
  h+='<div class="card" style="margin-top:10px"><div><b>Repère de séries par muscle</b><div class="mute small">Zone grisée des barres dans Progrès &gt; Muscles</div></div><div class="seg"><button data-act="volSet" data-v="low" aria-pressed="'+(S.set.vol!=='std')+'">Faible volume · 6–10</button><button data-act="volSet" data-v="std" aria-pressed="'+(S.set.vol==='std')+'">Standard · 10–20</button></div></div>';
- h+='<div class="card" style="margin-top:10px"><div><b>Muscles suivis sur l\'accueil</b><div class="mute small">Bloc « Dernier travail » : masque ceux que tu ne travailles pas</div></div><div class="seg">'+Object.keys(MUS).filter(function(m){return m!=='autre'}).map(function(m){return '<button data-act="muHide" data-m="'+m+'" aria-pressed="'+!(S.set.hideMu||{})[m]+'"><i class="mdot" style="background:'+mcol(m)+';margin-right:6px"></i>'+MUS[m].n+'</button>'}).join('')+'</div></div>';
+ h+='<div class="card" style="margin-top:10px"><div><b>Muscles suivis</b><div class="mute small">Masque ceux que tu ne travailles pas : ils sont ignorés dans la progression globale</div></div><div class="seg">'+Object.keys(MUS).filter(function(m){return m!=='autre'}).map(function(m){return '<button data-act="muHide" data-m="'+m+'" aria-pressed="'+!(S.set.hideMu||{})[m]+'"><i class="mdot" style="background:'+mcol(m)+';margin-right:6px"></i>'+MUS[m].n+'</button>'}).join('')+'</div></div>';
  h+='<div class="shd"><h2>Importer</h2></div>'+fnCard();
  return h;
 }
@@ -2397,12 +2400,12 @@ function shHead(t,sub){return '<div class="sheet-h"><div style="min-width:0"><h2
  }
  if(s.name==='info'){
   var it,Zi=volZone();
-  if(s.k==='pg'){var Wi=pgWinFor(PER()),mti=ui.pgm==='vol'?'volume par exercice : charge × reps':'force, estimée par ton 1RM';it=['Progression globale','<p>Où tu en es à chaque date : chaque exercice principal (les 2 plus utilisés par muscle) est comparé à lui-même il y a '+(Wi===3?'3 mois':'1 mois')+' ('+mti+').</p><p>0 % = tu stagnes, au-dessus tu progresses, en dessous tu régresses.</p><p>Un exercice arrêté depuis plus de 2 mois sort peu à peu de la moyenne ; à la reprise, il est comparé à son dernier niveau d\'avant la pause et rejoint la courbe progressivement.</p><p>Touche un point de la courbe pour voir le détail d\'un jour précis.</p>']}
+  if(s.k==='pg'){var Wi=pgWinFor(PER()),mti=ui.pgm==='vol'?'volume par exercice : charge × reps':'force, estimée par ton 1RM';it=['Progression globale','<p>Où tu en es à chaque date : chaque exercice principal (les 3 plus utilisés par muscle) est comparé à lui-même il y a '+(Wi===3?'3 mois':'1 mois')+' ('+mti+').</p><p>0 % = tu stagnes, au-dessus tu progresses, en dessous tu régresses.</p><p>Un exercice arrêté depuis plus de 2 mois sort peu à peu de la moyenne ; à la reprise, il est comparé à son dernier niveau d\'avant la pause et rejoint la courbe progressivement.</p><p>Touche un point de la courbe pour voir le détail d\'un jour précis.</p>']}
   else it=['Séries par muscle','<p>Les barres montrent le nombre de séries sur la période (moyenne par semaine pour un mois, une année ou tout). La zone grisée ('+Zi[0]+' à '+Zi[1]+') est ton repère en séries par semaine et par muscle, à changer dans Réglages.</p><p>Les échauffements ne comptent pas. Une série compte 1 pour le muscle principal et ½ pour chaque muscle secondaire : règle ces tags depuis l\'engrenage d\'un exercice (dans le sélecteur ou la séance).</p><p>Le chiffre à droite est l\'écart avec la période précédente.</p>'];
   return '<div class="ov"><div class="sheet" role="dialog" aria-label="'+it[0]+'"><div class="sheet-h"><h2>'+it[0]+'</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b ap-info">'+it[1]+'<button class="btn" data-act="closeSheet">OK</button></div></div></div>';
  }
  if(s.name==='pgmain'){
-  var real2=(ui.pgk||'real')==='real',cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">'+(real2?'Pris en compte au '+dlabelY(s.date)+' : chaque exercice est comparé à lui-même il y a '+(pgWinFor(PER())===3?'3 mois':'1 mois')+'.':'Les 2 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.')+'</p>';
+  var real2=(ui.pgk||'real')==='real',cur2='',hh='<div class="ov"><div class="sheet" role="dialog" aria-label="Exercices principaux"><div class="sheet-h"><h2>Exercices principaux</h2><button class="ibtn" data-act="closeSheet" aria-label="Fermer">'+svg('x')+'</button></div><div class="sheet-b"><p class="mute small" style="margin:0">'+(real2?'Pris en compte au '+dlabelY(s.date)+' : chaque exercice est comparé à lui-même il y a '+(pgWinFor(PER())===3?'3 mois':'1 mois')+'.':'Les 3 plus utilisés par muscle sur les 3 mois jusqu\'au '+dlabelY(s.date)+'.')+'</p>';
   var ms=real2?(ui.pgDets&&ui.pgDets[s.date]||[]).map(function(q){return {ex:q[0],mus:musOf(q[0]),n:q[4],pct:q[1],rec:q[3],w:q[2]}}):pgMainsAt(s.date,ui.pgm||'e1rm');
   ms.forEach(function(q){if(q.mus!==cur2){cur2=q.mus;hh+='<div class="month">'+MUS[q.mus].n+'</div>'}hh+='<div class="xl"><span class="t">'+mdot(q.ex)+' '+esc(exName(q.ex))+'<span class="mute" style="display:block;font-size:13px;margin-left:18px">'+q.n+' séance'+(q.n>1?'s':'')+' sur 3 mois'+(q.rec?' · en reprise':'')+(real2&&q.w<0.99?' · intégré progressivement':'')+'</span></span><span class="v num '+(q.pct==null?'':q.pct>0.05?'up':q.pct<-0.05?'dn':'')+'">'+(q.pct==null?'–':(q.pct>0?'+':'')+fmt(q.pct)+' %')+'</span></div>'});
   if(!ms.length)hh+='<p class="mute">Aucun exercice avec charge sur cette période.</p>';

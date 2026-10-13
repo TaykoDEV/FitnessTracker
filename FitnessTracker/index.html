@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6ace4d66">
+<meta name="build" content="6ace5418">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass')document.documentElement.setAttribute('data-gsub',(g&&/^[a-z]+$/.test(g)&&g!=='aurore')?g:'prisme')}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1004,6 +1004,19 @@ button.sn::after{left:-3px;right:-3px}
 .scroll.lp-ex section.ex .tools,.scroll.lp-ex section.ex .ex-h p{display:none}
 .scroll.lp-ex section.ex:not(.col){padding:12px 14px;min-height:60px;display:flex;flex-direction:column;justify-content:center}
 .scroll.lp-ex section.ex h3{font-size:20px}
+
+/* barre du bas v2 : rail ancré (thèmes glass) */
+html:root[data-skin="glass"]{--nvc:#fff;--nvg:#fff}
+html:root[data-skin="glass"][data-gsub="prisme"]{--nvg:linear-gradient(90deg,#7CF3FF,#B79CFF 40%,#FF8AD8 70%,#FFE29A)}
+html:root[data-skin="glass"][data-gsub="chrono"]{--nvc:#FFB02E;--nvg:#FFB02E}
+html:root[data-skin="glass"][data-gsub="givre"]{--nvc:#4b36d6;--nvg:#6B55F5}
+html:root[data-skin="glass"][data-gsub="fume"]{--nvc:#7DF9FF;--nvg:#5eead4}
+html:root[data-skin="glass"] .nav{margin:0!important;border-radius:0!important;border-style:solid!important;border-width:1px 0 0!important;border-color:var(--line)!important;box-shadow:none!important;padding:0 4px env(safe-area-inset-bottom,0)}
+html:root[data-skin="glass"] .nav::before{display:none!important}
+html:root[data-skin="glass"] .nav button{min-height:64px;gap:4px}
+html:root[data-skin="glass"] .nav .ni svg{width:26px;height:26px}
+html:root[data-skin="glass"] .nav button[aria-current="page"]{font-weight:700}
+html:root[data-skin="glass"] .nav-ind{z-index:1;height:3px!important;width:34px!important;margin-left:14px;top:-1px!important;border-radius:0 0 4px 4px!important;background:var(--nvg)!important;box-shadow:0 5px 16px var(--nvc)!important}
 </style>
 </head>
 <body>

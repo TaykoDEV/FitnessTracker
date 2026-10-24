@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6add059f">
+<meta name="build" content="6add079a">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass')document.documentElement.setAttribute('data-gsub',(g&&/^[a-z]+$/.test(g)&&g!=='aurore')?g:'prisme')}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,6 +76,10 @@ html[data-ro]::after{content:'';position:fixed;inset:0;z-index:99999;pointer-eve
 .rob{display:flex;align-items:center;gap:8px;margin:-6px 0 14px;padding:9px 12px;border-radius:12px;background:var(--surf2);font-size:var(--fs-sm);color:var(--mute);box-shadow:inset 0 0 0 1px var(--bd)}
 .rob b{color:var(--fg)}.rob .rb{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;color:var(--mute)}
 .rob .rb svg{width:18px;height:18px}
+.shc{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin:-6px 0 14px;padding:6px 8px 6px 14px;border-radius:14px;text-align:left;color:var(--fg);font-size:var(--fs-sm);background:color-mix(in srgb,var(--acc) 13%,var(--surf2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 45%,transparent)}
+.shc span{flex:1;min-width:0;font-weight:500}
+.shc b{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;background:var(--acc);color:var(--acc-ink);font-weight:700}
+.shc[aria-busy=true]{opacity:.75}
 .shin{width:100%}
 .ptop{margin:0 0 12px}
 .mom{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--fg);padding:12px 14px;margin:0 0 12px;border-radius:16px;background:var(--surf);border:1px solid var(--line);cursor:pointer}
@@ -2729,7 +2733,7 @@ function render(){
  var mo=MO(),oS=app.querySelector('.ov:not(.mid):not(.ovout)'),oM=app.querySelector('.ov.mid:not(.ovout)'),gS=mo&&oS?ovGhost(oS):null,gM=mo&&oM?ovGhost(oM):null;
  var h=r.name==='logger'?loggerView():r.name==='tpl'?tplView():r.name==='lib'?libView():r.name==='sess'?sessView():r.name==='day'?dayView():mainView();
  app.innerHTML=h+sheetHTML()+modalHTML();
- if(typeof profInject==='function')profInject();
+ if(typeof profInject==='function')profInject();if(typeof shChipInject==='function')shChipInject();
  sheetKey=ui.sheet?ui.sheet.name+(ui.sheet.ex||ui.sheet.date||''):'';
  if(mo){
   var nS=app.querySelector('.ov:not(.mid)'),nM=app.querySelector('.ov.mid');
@@ -3372,15 +3376,15 @@ function shPush(mode){
  var interactive=mode===true;
  if(!shSt.on||shBusy||ui.ro||!shAvail())return Promise.resolve('skip');
  if(!interactive&&mode!=='fin'&&shSt.failAt&&Date.now()-shSt.failAt<shBack(shSt.failN))return Promise.resolve('skip');
- var hh=shHashOf(shBody());
- if(!interactive&&hh===shSt.hash){shSt.chk=Date.now();shSave();return Promise.resolve('skip')}
+ var hh=shHashOf(shBody()),hs=shHashOf(SESS);
+ if(!interactive&&hh===shSt.hash){shSt.chk=Date.now();shSt.hs=hs;shSave();return Promise.resolve('skip')}
  shBusy=true;shSt.err='';shRef();
  var body=shPayload();
- return shToken(interactive?'':'none').then(function(){
+ return shToken(interactive||mode==='fin'?'':'none').then(function(){
   if(!shSt.id)return shCreate(body);
   return shUpdate(body).then(function(){return {id:shSt.id,resourceKey:shSt.rk}},function(e){if(e&&e.error==='http404'){shSt.id=null;return shCreate(body)}throw e});
  }).then(function(f){
-  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.chk=shSt.last;shSt.hash=hh;shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
+  shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.chk=shSt.last;shSt.hash=hh;shSt.hs=hs;shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
  }).catch(function(e){shBusy=false;shSt.pend=true;shSt.err=shErr(e);shSt.failAt=Date.now();shSt.failN=Math.min((shSt.failN||0)+1,8);shSave();shRef();return 'err'});
 }
 function shBoot(){
@@ -3391,6 +3395,23 @@ function shBoot(){
 /* fin de séance : un seul essai de partage */
 var _cmShare=commit;
 commit=function(k){var was=ui.curKind==='active';_cmShare(k);if(was&&!ui.cur&&shSt.on&&!ui.ro)setTimeout(function(){shPush('fin').then(function(r){if(r==='err'){shNagAt=0;shNag()}})},700)};
+var shDM=null;
+function shDirty(){
+ if(!shSt.on||!shSt.hs||ui.ro)return false;
+ var k=SESS.length;if(shDM&&shDM.k===k&&Date.now()-shDM.t<2e4)return shDM.v;
+ var v=shHashOf(SESS)!==shSt.hs;shDM={k:k,t:Date.now(),v:v};return v;
+}
+function shChipInject(){
+ var o=app.querySelector('.shc');if(o)o.remove();
+ if(ui.ro||ui.route.name!=='main'||ui.tab!=='today'||!shSt.on||!(shBusy||shSt.pend||shSt.err||shDirty()))return;
+ var hd=app.querySelector('.scroll .hd');if(!hd)return;
+ hd.insertAdjacentHTML('afterend','<button class="shc" data-act="shChip"'+(shBusy?' aria-busy="true"':'')+'><span>'+(shBusy?'Envoi en cours…':'Séances non partagées')+'</span>'+(shBusy?'':'<b>Envoyer</b>')+'</button>');
+}
+A.shChip=function(){
+ if(shBusy)return;
+ shDM=null;
+ shPush(true).then(function(r){if(r==='ok')toast('Partage mis à jour');else if(r==='err')toast('Envoi impossible. Réessaie dans un instant')});
+};
 var shNagAt=0;
 function shNag(){
  if(!shSt.on||ui.ro||!(shSt.pend||shSt.err)||shBusy||Date.now()-shNagAt<36e5)return;
@@ -3565,7 +3586,7 @@ function stShareSheet(){
  if(!shSt.on){
   h+='<p class="st-note">Crée un lien secret en lecture seule : la personne qui le reçoit voit tes séances et ta progression, sans rien pouvoir modifier. Ton poids n\'est pas partagé. Tu peux arrêter à tout moment.</p><button class="btn" data-act="shOn">Activer le partage</button>';
  }else{
-  var st=shBusy?'Mise à jour…':shSt.err?'⚠ '+esc(shSt.err)+'. Appuie sur « Mettre à jour » pour te reconnecter.':'Dernière mise à jour : '+(shSt.last?gAgo(shSt.last):'jamais')+'. Automatique à la fin d\'une séance, puis une fois par jour au lancement.';
+  var st=shBusy?'Mise à jour…':shSt.err?'⚠ '+esc(shSt.err)+'. Appuie sur « Mettre à jour » pour te reconnecter.':'Dernière mise à jour : '+(shSt.last?gAgo(shSt.last):'jamais')+'. Automatique à la fin d\'une séance. Si l\'envoi échoue, un bouton « Envoyer » apparaît sur l\'accueil.';
   h+='<p class="st-note">'+st+'</p><input class="in t shin" readonly value="'+esc(shUrl())+'" onclick="this.select()" aria-label="Ton lien de partage"><div class="row2" style="margin-top:10px"><button class="btn" data-act="shSend">Envoyer le lien</button><button class="btn soft" data-act="shCopy">Copier</button></div><div class="row2" style="margin-top:8px"><button class="btn soft" data-act="shNow">Mettre à jour</button><button class="btn line" data-act="shOff">Arrêter</button></div>';
  }
  h+='<p class="p2-sec">Voir les données de quelqu\'un</p>';

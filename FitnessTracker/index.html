@@ -7,7 +7,7 @@
 <title>Fitness Tracker</title>
 <meta name="description" content="Suivi de musculation : programme, séances, historique et progression.">
 <meta name="theme-color" content="#111417">
-<meta name="build" content="6ace5418">
+<meta name="build" content="6add059f">
 <script>try{var k=localStorage.getItem('ft.skin');if(k&&/^[a-z]+$/.test(k)&&k!=='base'){document.documentElement.setAttribute('data-skin',k);var g=localStorage.getItem('ft.gsub');if(k==='glass')document.documentElement.setAttribute('data-gsub',(g&&/^[a-z]+$/.test(g)&&g!=='aurore')?g:'prisme')}}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2608,10 +2608,11 @@ window.addEventListener('popstate',function(e){
 var ka=null,kaUrl=null,restT=0;
 function silentUrl(){
  if(kaUrl)return kaUrl;
- var n=8000,b=new ArrayBuffer(44+n),v=new DataView(b);
+ /* 2 Hz à -54 dBFS : sous le seuil d'audition (et de ce que reproduit un haut-parleur), mais pas du silence numérique */
+ var sr=8000,n=sr*4,b=new ArrayBuffer(44+n*2),v=new DataView(b);
  function w(o,t){for(var i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))}
- w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
- for(var i=0;i<n;i++)v.setUint8(44+i,i%2?129:127);
+ w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+ for(var i=0;i<n;i++)v.setInt16(44+i*2,Math.round(64*Math.sin(2*Math.PI*2*i/sr)),true);
  kaUrl=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));return kaUrl;
 }
 function hap(p){if(S.set.hap===false)return;try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
@@ -2619,7 +2620,7 @@ function keepAlive(on){
  try{
   if(on){
    if(S.set.notif===false)return;
-   if(!ka){ka=new Audio(silentUrl());ka.loop=true;ka.volume=0.05}
+   if(!ka){ka=new Audio(silentUrl());ka.loop=true;ka.volume=1}
    var pr=ka.play();if(pr&&pr.catch)pr.catch(function(){});
    if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:'Repos en cours',artist:'Fitness Tracker'});
   }else if(ka&&!ka.paused)ka.pause();
@@ -3380,7 +3381,7 @@ function shPush(mode){
   return shUpdate(body).then(function(){return {id:shSt.id,resourceKey:shSt.rk}},function(e){if(e&&e.error==='http404'){shSt.id=null;return shCreate(body)}throw e});
  }).then(function(f){
   shSt.id=f.id;if(f.resourceKey)shSt.rk=f.resourceKey;shSt.last=Date.now();shSt.chk=shSt.last;shSt.hash=hh;shSt.pend=false;shSt.err='';shSt.failAt=0;shSt.failN=0;shBusy=false;shSave();shRef();return 'ok';
- }).catch(function(e){shBusy=false;shSt.err=shErr(e);shSt.failAt=Date.now();shSt.failN=Math.min((shSt.failN||0)+1,8);shSave();shRef();return 'err'});
+ }).catch(function(e){shBusy=false;shSt.pend=true;shSt.err=shErr(e);shSt.failAt=Date.now();shSt.failN=Math.min((shSt.failN||0)+1,8);shSave();shRef();return 'err'});
 }
 function shBoot(){
  if(!shSt.on||ui.ro||shBusy||S.active||(ui.route&&ui.route.name==='logger'))return;
@@ -3389,9 +3390,15 @@ function shBoot(){
 }
 /* fin de séance : un seul essai de partage */
 var _cmShare=commit;
-commit=function(k){var was=ui.curKind==='active';_cmShare(k);if(was&&!ui.cur&&shSt.on&&!ui.ro)setTimeout(function(){shPush('fin')},700)};
-setTimeout(shBoot,4000);
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(shBoot,1200)});
+commit=function(k){var was=ui.curKind==='active';_cmShare(k);if(was&&!ui.cur&&shSt.on&&!ui.ro)setTimeout(function(){shPush('fin').then(function(r){if(r==='err'){shNagAt=0;shNag()}})},700)};
+var shNagAt=0;
+function shNag(){
+ if(!shSt.on||ui.ro||!(shSt.pend||shSt.err)||shBusy||Date.now()-shNagAt<36e5)return;
+ shNagAt=Date.now();
+ toast('Ton partage n\'est pas à jour',{label:'Envoyer',fn:function(){shPush(true).then(function(r){if(r==='ok')toast('Partage mis à jour')})}});
+}
+setTimeout(shBoot,4000);setTimeout(shNag,6000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){setTimeout(shBoot,1200);setTimeout(shNag,3500)}});
 
 /* --- lien / code --- */
 function shCode(){return shSt.id?shSt.id+'.'+(shSt.rk||'0')+'.'+(shKey()||'0'):''}
@@ -3420,11 +3427,13 @@ function shLinkDo(text,re0){
  return shFetch(P).then(function(j){shLoading=false;if(ui.ro)roExit();shStore(P,j);render();toast('Profil de '+shP.name+' lié');if((P.re||re0)&&shSt.on&&shSt.id)setTimeout(function(){ui.modal={title:'Lui renvoyer ton lien ?',text:shP.name+' ne voit pas encore tes séances. Envoie-lui ton lien : il lui suffira de l\'ouvrir et d\'accepter.',btns:[{act:'shSend',label:'Envoyer mon lien'},{act:'closeModal',label:'Plus tard',line:true}]};render()},900)}).catch(function(e){shLoading=false;toast(shMsg(e))});
 }
 var shTry=0,shFailAt=0,shFailN=0;
+function shLastDate(){var m='';try{((shP&&shP.data&&shP.data.SESS)||[]).forEach(function(x){if(x.date>m)m=x.date})}catch(e){}return m}
+function shSent(){if(!shP||!shP.at)return shP&&shP.fetched?gAgo(shP.fetched):'';var old=Date.now()-shP.at>2*864e5;return (old?'⚠ ':'')+'envoyé '+gAgo(shP.at)}
 function shRefreshP(manual){
  if(!shP||shP.demo||shLoading)return Promise.resolve();
  if(!manual&&(Date.now()-shTry<6e4||(shFailAt&&Date.now()-shFailAt<shBack(shFailN))))return Promise.resolve();
  shTry=Date.now();shLoading=true;
- return shFetch(shP).then(function(j){shLoading=false;shFailAt=0;shFailN=0;if(j.at&&j.at===shP.at){shP.fetched=Date.now();if(manual)toast('Profil à jour');return}shStore(shP,j);if(ui.ro){roLoad();thApply();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;shFailAt=Date.now();shFailN=Math.min(shFailN+1,8);if(manual)toast(shMsg(e))});
+ return shFetch(shP).then(function(j){shLoading=false;shFailAt=0;shFailN=0;if(j.at&&j.at===shP.at){shP.fetched=Date.now();if(manual)toast(shP.at?'Rien de nouveau : dernier envoi de '+shP.name+' '+gAgo(shP.at):'Profil à jour');return}shStore(shP,j);if(ui.ro){roLoad();thApply();render()}else shRef();if(manual)toast('Profil actualisé')}).catch(function(e){shLoading=false;shFailAt=Date.now();shFailN=Math.min(shFailN+1,8);if(manual)toast(shMsg(e))});
 }
 
 /* --- bascule de profil --- */
@@ -3483,7 +3492,7 @@ function profInject(){
  var pi=hd.querySelector('.prof .pi');
  if(pi&&profPrev!==null&&profPrev!==on){void pi.offsetWidth;pi.style.transform='translateX('+(on?38:0)+'px)'}
  profPrev=on;
- if(on)hd.insertAdjacentHTML('afterend','<div class="rob"><span>Profil de <b>'+esc(other)+'</b> · lecture seule · '+(shP.fetched?gAgo(shP.fetched):'')+'</span><button class="rb" data-act="shRefresh" aria-label="Actualiser">'+svg('refresh',18)+'</button></div>');
+ if(on)hd.insertAdjacentHTML('afterend','<div class="rob"><span>Profil de <b>'+esc(other)+'</b> · '+(shP.at&&Date.now()-shP.at>2*864e5?'':'lecture seule · ')+shSent()+'</span><button class="rb" data-act="shRefresh" aria-label="Actualiser">'+svg('refresh',18)+'</button></div>');
 }
 var profBusy=false;
 function profCircle(go,back){
@@ -3547,7 +3556,7 @@ A.shUnlinkOk=function(){ui.modal=null;if(ui.ro)roExit();shP=null;shPrep=null;shS
 ROK.shLinkOk=1;ROK.closeModal=1;
 function stShareRows(){
  if(!shAvail())return '';
- return '<button class="st-r" data-act="stShare"><span class="lead">'+svg('stlink',20)+'</span><span class="t"><b>Partager mes données</b></span><span class="v">'+(shSt.on?'Activé':'Désactivé')+'</span>'+svg('chev',18)+'</button><button class="st-r" data-act="stShare"><span class="lead">'+svg('steye',20)+'</span><span class="t"><b>Voir les données de quelqu\'un</b></span><span class="v">'+(shP?'Lié · '+esc(shP.name):'')+'</span>'+svg('chev',18)+'</button>';
+ return '<button class="st-r" data-act="stShare"><span class="lead">'+svg('stlink',20)+'</span><span class="t"><b>Partager mes données</b></span><span class="v">'+(shSt.on?((shSt.pend||shSt.err)?'⚠ À envoyer':'Activé'):'Désactivé')+'</span>'+svg('chev',18)+'</button><button class="st-r" data-act="stShare"><span class="lead">'+svg('steye',20)+'</span><span class="t"><b>Voir les données de quelqu\'un</b></span><span class="v">'+(shP?'Lié · '+esc(shP.name):'')+'</span>'+svg('chev',18)+'</button>';
 }
 function stShareSheet(){
  if(!shAvail()){ui.sheet=null;return ''}
@@ -3563,7 +3572,7 @@ function stShareSheet(){
  if(!shP){
   h+='<p class="st-note">Colle ici le lien reçu. Un bouton en haut à droite te permettra ensuite de basculer entre vos deux profils.</p><input class="in t shin" id="shin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Lien de partage" aria-label="Lien de partage reçu"><div style="height:10px"></div><button class="btn soft" data-act="shLink">Lier ce profil</button>';
  }else{
-  h+='<p class="st-note"><b>Profil lié : '+esc(shP.name)+'.</b> '+(shP.demo?'':'Actualisé '+(shP.fetched?gAgo(shP.fetched):'jamais')+'. ')+'Bascule avec le bouton en haut à droite de l\'accueil.'+(shP.demo?' (profil démo, données fictives)':'')+'</p><div class="row2"><button class="btn soft" data-act="shRefresh">Actualiser</button><button class="btn line" data-act="shUnlink">Délier</button></div>';
+  h+='<p class="st-note"><b>Profil lié : '+esc(shP.name)+'.</b> '+(shP.demo?'':'Actualisé '+(shP.fetched?gAgo(shP.fetched):'jamais')+'. '+(shP.at?'Dernier envoi de '+esc(shP.name)+' : '+gAgo(shP.at)+(shLastDate()?' (dernière séance '+esc(dlabel(shLastDate()))+')':'')+'. '+(Date.now()-shP.at>2*864e5?'« À jour » veut dire que rien de plus récent n\'a été envoyé : '+esc(shP.name)+' doit ouvrir Réglages › Partage › Mettre à jour. ':''):''))+'Bascule avec le bouton en haut à droite de l\'accueil.'+(shP.demo?' (profil démo, données fictives)':'')+'</p><div class="row2"><button class="btn soft" data-act="shRefresh">Actualiser</button><button class="btn line" data-act="shUnlink">Délier</button></div>';
  }
  if(!(SKEY&&SKEY.indexOf('__')!==0)&&!shSt.key)h+='<p class="p2-sec">Avancé · clé API Google</p><p class="st-note">Nécessaire une seule fois pour lire un profil partagé. Colle la clé créée dans Google Cloud (restreinte à l\'API Drive).</p><input class="in t shin" data-f="shkey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…" aria-label="Clé API Google">';
  return '<div class="ov"><div class="sheet" role="dialog" aria-label="Partage entre deux profils">'+stHead('Partage entre deux profils','')+'<div class="sheet-b">'+h+'</div></div></div>';
